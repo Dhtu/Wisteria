@@ -16,5 +16,11 @@ def print_byte(s, file=sys.stdout, nl=1):
     file.flush()
 
 consumer = KafkaConsumer('quickstart-events', bootstrap_servers= ['localhost:9092'])
-for msg in consumer:
-    print_byte(msg.value)
+
+
+while True:
+    try:
+        for msg in consumer:
+            print_byte(msg.value)
+    except KeyboardInterrupt:
+        exit()
