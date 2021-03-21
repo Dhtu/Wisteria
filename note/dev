@@ -1,0 +1,23 @@
+# strace用法
+
+https://blog.csdn.net/qq_33894122/article/details/108187352
+
+strace -cp [pid]
+
+strace -T -e read -p
+
+# zookeeper
+
+zookeeper-server-start.sh config/zookeeper.properties
+
+# kafka
+
+bin/kafka-server-start.sh config/server.properties
+
+bin/kafka-console-producer.sh --topic quickstart-events --bootstrap-server localhost:9092
+
+# kde虚拟桌面
+
+ctrl + F1
+
+右键标题栏
