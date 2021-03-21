@@ -18,9 +18,16 @@ def print_byte(s, file=sys.stdout, nl=1):
 consumer = KafkaConsumer('quickstart-events', bootstrap_servers= ['localhost:9092'])
 
 
+
+def msg_processor(b):
+    s = str(b, encoding="utf-8").split()
+    if s[4] != "127.0.0.1":
+        print(s[4]+'\t'+s[5]+'\t'+s[6])
+
 while True:
     try:
         for msg in consumer:
-            print_byte(msg.value)
+            # print_byte(msg.value)
+            msg_processor(msg.value)
     except KeyboardInterrupt:
         exit()
