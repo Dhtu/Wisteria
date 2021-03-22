@@ -1,6 +1,12 @@
-#!/usr/bin/sudo python
+#!/usr/bin/python
+from kafka import KafkaProducer
 
-from bcc import BPF
+producer = KafkaProducer(bootstrap_servers=['172.17.0.1:9092'])
+future = producer.send('quickstart-events2' , key= b'my_key', value= b'my_value', partition= 0)
 
-# This may not work for 4.17 on x64, you need replace kprobe__sys_clone with kprobe____x64_sys_clone
-BPF(text='int kprobe__sys_write(void *ctx) { bpf_trace_printk("Hello, World!\\n"); return 0; }').trace_print()
+# from kafka import KafkaProducer
+#
+# producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
+# future = producer.send('my_topic' , key= b'my_key', value= b'my_value', partition= 0)
+result = future.get(timeout= 10)
+# print(result)
