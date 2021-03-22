@@ -65,6 +65,11 @@ struct data_read {
 BPF_PERF_OUTPUT(read_events);
 
 int sys_write_entry(struct pt_regs *ctx) {
+
+    if (container_should_be_filtered()) {
+        return 0;
+    }
+
     struct data_write data = {};
 
     data.pid = bpf_get_current_pid_tgid();
@@ -78,6 +83,13 @@ int sys_write_entry(struct pt_regs *ctx) {
 }
 
 int sys_read_entry(struct pt_regs *ctx) {
+
+
+    if (container_should_be_filtered()) {
+        return 0;
+    }
+    
+    
     struct data_read data = {};
 
     data.pid = bpf_get_current_pid_tgid();
