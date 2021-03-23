@@ -248,8 +248,7 @@ def print_ipv4_event(cpu, data, size):
                                                             event.task, event.ip,
                                                             inet_ntop(AF_INET, pack("I", event.saddr)).encode(),
                                                             dest_ip, event.dport)
-    producer.send('quickstart-events2', key=None, value=event_text, partition=0)
-    print(event_text)
+    producer.send('tcpconnect', key=None, value=event_text, partition=0)
 
 
 def print_ipv6_event(cpu, data, size):
@@ -274,16 +273,7 @@ b.attach_kprobe(event="tcp_v6_connect", fn_name="trace_connect_entry")
 b.attach_kretprobe(event="tcp_v4_connect", fn_name="trace_connect_v4_return")
 b.attach_kretprobe(event="tcp_v6_connect", fn_name="trace_connect_v6_return")
 
-producer.send('quickstart-events2', key=None, value=b"Start Ebpf tracing", partition=0)
-
-# header
-# print("%-9s" % ("TIME(s)"), end="")
-# if args.print_uid:
-#     print("%-6s" % ("UID"), end="")
-# print("%-6s %-12s %-2s %-16s %-16s %-6s" % ("PID", "COMM", "IP", "SADDR",
-#     "DADDR", "DPORT"), end="")
-# print()
-
+producer.send('tcpconnect', key=None, value=b"Start Ebpf tracing", partition=0)
 
 start_ts = 0
 
