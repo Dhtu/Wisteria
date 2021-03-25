@@ -7,7 +7,7 @@ from kafka import KafkaProducer
 import argparse
 import socket
 
-# arguments todo
+# arguments
 examples = """examples:
     ./tcpconnect           # trace all TCP connect()s
     ./tcpconnect -d        # include DNS queries associated with connects
@@ -44,6 +44,11 @@ args = parser.parse_args()
 producer = KafkaProducer(bootstrap_servers=['172.17.0.1:9092'])
 hostname = socket.gethostname()
 ip = socket.gethostbyname(hostname)
+
+
+#todo: 可能把pid与tgid弄混了，需要后续验证
+
+
 
 # define BPF program
 prog = """

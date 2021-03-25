@@ -8,17 +8,17 @@ strace -T -e read -p
 
 # zookeeper
 
-sudo bin/zkServer.sh start
+sudo /usr/share/zookeeper/bin/zkServer.sh start
 
 # kafka
 
 设置docker网络的listener配置
 
-sudo bin/kafka-server-start.sh config/server.properties
+sudo /usr/share/kafka/bin/kafka-server-start.sh /usr/share/kafka/config/server.properties
 
-bin/kafka-console-producer.sh --topic quickstart-events --bootstrap-server localhost:9092
+/usr/share/kafka/bin/kafka-console-producer.sh --topic tcpconnect --bootstrap-server localhost:9092
 
-bin/kafka-console-consumer.sh --topic quickstart-events --from-beginning --bootstrap-server localhost:9092
+/usr/share/kafka/bin/kafka-console-consumer.sh --topic tcpconnect --from-beginning --bootstrap-server localhost:9092
 
 # kde虚拟桌面
 
@@ -39,9 +39,15 @@ docker run  -it --privileged \
 
   docker start xxxx
 
-docker exec -it 775c7c9ee1e1 /bin/bash 
+docker exec -it --privileged \
+  --name opt \
+  -v /lib/modules:/lib/modules:ro \
+  -v /sys:/sys:ro \
+  -v /usr/src:/usr/src:ro \
+  -v /home/thtu/Wisteria:/home/thtu/Wisteria:ro \
+  w /bin/bash
 
-pacman -S bpf bcc bcc-tools python-bcc python-prp inetutils vim
+pacman -S bpf bcc bcc-tools python-bcc python-pip inetutils vim thrift python-thrift
 
 pip3 install kafka-python
 
@@ -50,7 +56,7 @@ bpftool map create /sys/fs/bpf/mnt_ns_set type hash key 8 value 4 entries 128 \
 
 
  ./tcpconnect --mntnsmap /sys/fs/bpf/mnt_ns_set &
-./tps --mntnsmap /sys/fs/bpf/mnt_ns_set &
+./src/agent/tps --mntnsmap /sys/fs/bpf/mnt_ns_set &
 ./hello --mntnsmap /sys/fs/bpf/mnt_ns_set &
 
 
