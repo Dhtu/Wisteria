@@ -72,3 +72,9 @@ fi
 
 NS_ID_HEX="$(printf '%016x' $(stat -Lc '%i' /proc/self/ns/mnt) | sed 's/.\{2\}/&\n/g' | $HOST_ENDIAN_CMD)"
 bpftool map update pinned $FILE key hex $NS_ID_HEX value hex 00 00 00 00 any
+
+
+grep NSpid /proc/24918/status | cut -f3
+
+用find_ns_pid找到pid
+pid内部的upid就是目标

@@ -52,6 +52,7 @@ ip = socket.gethostbyname(hostname)
 # define BPF program
 prog = """
 #include <linux/sched.h>
+#include <linux/pid_namespace.h>
 
 // define output data structure in C
 
@@ -81,8 +82,12 @@ TRACEPOINT_PROBE(syscalls, sys_enter_write) {
 
 
     struct data_write data = {};
-
-    data.pid = bpf_get_current_pid_tgid();
+    
+    u32 opid = bpf_get_current_pid_tgid();
+    struct task_struct *t = (struct task_struct *)bpf_get_current_task();
+    u32 upid = t->nsproxy->pid_ns_for_children->pid_allocated;
+    data.pid = upid;
+    //data.pid = bpf_get_current_pid_tgid();
     data.ts = bpf_ktime_get_ns();
     data.fd = args->fd;
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
@@ -101,7 +106,11 @@ TRACEPOINT_PROBE(syscalls, sys_enter_read) {
 
     struct data_read data = {};
 
-    data.pid = bpf_get_current_pid_tgid();
+    u32 opid = bpf_get_current_pid_tgid();
+    struct task_struct *t = (struct task_struct *)bpf_get_current_task();
+    u32 upid = t->nsproxy->pid_ns_for_children->pid_allocated;
+    data.pid = upid;
+    //data.pid = bpf_get_current_pid_tgid();
     data.ts = bpf_ktime_get_ns();
     data.fd = args->fd;
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
