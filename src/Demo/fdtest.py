@@ -4,7 +4,7 @@ import os, stat
 
 
 def is_sock(pid, fd):
-    path = "/proc/34/fd/5"
+    path = "/hostproc/124605/fd/99"
 
     info = os.stat(path)
 

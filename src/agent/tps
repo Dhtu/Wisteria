@@ -4,6 +4,7 @@
 from bcc import BPF
 from bcc.containers import filter_by_containers
 from kafka import KafkaProducer
+import os, stat
 import argparse
 import socket
 
@@ -45,64 +46,69 @@ producer = KafkaProducer(bootstrap_servers=['172.17.0.1:9092'])
 hostname = socket.gethostname()
 ip = socket.gethostbyname(hostname)
 
-
-#todo: 可能把pid与tgid弄混了，需要后续验证
-
-
-
 # define BPF program
 prog = """
 #include <linux/sched.h>
+#include <linux/pid_namespace.h>
+#include <linux/pid.h>
 
 // define output data structure in C
+
 struct data_write {
     u32 pid;
     u64 ts;
     char comm[TASK_COMM_LEN];
+    unsigned int fd;
 };
 BPF_PERF_OUTPUT(write_events);
+
 
 struct data_read {
     u32 pid;
     u64 ts;
     char comm[TASK_COMM_LEN];
+    unsigned int fd;
 };
 BPF_PERF_OUTPUT(read_events);
 
-int sys_write_entry(struct pt_regs *ctx) {
 
+
+TRACEPOINT_PROBE(syscalls, sys_enter_write) {
     if (container_should_be_filtered()) {
         return 0;
     }
 
+
     struct data_write data = {};
 
-    data.pid = bpf_get_current_pid_tgid();
+    u32 pid = bpf_get_current_pid_tgid();
+    data.pid=pid;
     data.ts = bpf_ktime_get_ns();
+    data.fd = args->fd;
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
-    
 
-    write_events.perf_submit(ctx, &data, sizeof(data));
+
+    write_events.perf_submit(args, &data, sizeof(data));
 
     return 0;
 }
 
-int sys_read_entry(struct pt_regs *ctx) {
-
-
+TRACEPOINT_PROBE(syscalls, sys_enter_read) {
     if (container_should_be_filtered()) {
         return 0;
     }
-    
-    
+
+
     struct data_read data = {};
+
 
     data.pid = bpf_get_current_pid_tgid();
     data.ts = bpf_ktime_get_ns();
+    data.fd = args->fd;
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
-    
 
-    read_events.perf_submit(ctx, &data, sizeof(data));
+
+    read_events.perf_submit(args, &data, sizeof(data));
 
     return 0;
 }
@@ -112,24 +118,42 @@ prog = filter_by_containers(args) + prog
 
 # load BPF program
 b = BPF(text=prog)
-b.attach_kprobe(event=b.get_syscall_fnname("write"), fn_name="sys_write_entry")
-b.attach_kprobe(event=b.get_syscall_fnname("read"), fn_name="sys_read_entry")
 
 # header
-print("Start monitoring the sys_write system call")
+print("Start monitoring the sys_read system call")
 
 # process event
 start = 0
 
 
+def is_sock(pid, fd):
+
+    path = "/proc/%s/fd/%s" % (pid,fd)
+
+    if is_exist(pid,fd):
+        info = os.stat(path)
+    else :
+        return False
+
+    if stat.S_ISSOCK(info.st_mode):
+        return True
+
+    else:
+        return False
+
+def is_exist(pid,fd):
+    return True
+
+
 def print_write_event(cpu, data, size):
     global start
+    global current_pid
     event = b["write_events"].event(data)
     if start == 0:
         start = event.ts
-    if event.comm != b"bash":
+    if event.pid != current_pid and is_exist(event.pid,event.fd) and  is_sock(event.pid,event.fd):
         event_text = b"%-9.3f" % ((float(event.ts) - start) / 1000000)
-        event_text += b" %-16s %-6d" % (event.comm, event.pid)
+        event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
         event_text += b" write "
         event_text += bytes(ip, encoding="utf8")
 
@@ -138,12 +162,13 @@ def print_write_event(cpu, data, size):
 
 def print_read_event(cpu, data, size):
     global start
+    global current_pid
     event = b["read_events"].event(data)
     if start == 0:
         start = event.ts
-    if event.comm != b"bash":
+    if event.pid != current_pid and is_exist(event.pid,event.fd) and  is_sock(event.pid,event.fd):
         event_text = b"%-9.3f" % ((float(event.ts) - start) / 1000000)
-        event_text += b" %-16s %-6d" % (event.comm, event.pid)
+        event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
         event_text += b" read "
         event_text += bytes(ip, encoding="utf8")
 
@@ -151,9 +176,11 @@ def print_read_event(cpu, data, size):
 
 
 # loop with callback to print_event
-b["write_events"].open_perf_buffer(print_write_event)
 b["read_events"].open_perf_buffer(print_read_event)
+b["write_events"].open_perf_buffer(print_write_event)
 
+
+current_pid = os.getpid()
 while True:
     try:
         b.perf_buffer_poll()

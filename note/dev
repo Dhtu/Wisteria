@@ -20,49 +20,19 @@ sudo /usr/share/kafka/bin/kafka-server-start.sh /usr/share/kafka/config/server.p
 
 /usr/share/kafka/bin/kafka-console-consumer.sh --topic tcpconnect --from-beginning --bootstrap-server localhost:9092
 
-# kde虚拟桌面
+# Wisteria agent
 
-ctrl + F1
-
-右键标题栏
-
-# docker
-
-
-docker run  -it --privileged \
-  --name opt \
-  -v /lib/modules:/lib/modules:ro \
-  -v /sys:/sys:ro \
-  -v /usr/src:/usr/src:ro \
-  -v /home/thtu/Wisteria:/home/thtu/Wisteria:ro \
-  archlinux
-
-  docker start xxxx
-
-docker exec -it --privileged \
-  --name opt \
-  -v /lib/modules:/lib/modules:ro \
-  -v /sys:/sys:ro \
-  -v /usr/src:/usr/src:ro \
-  -v /home/thtu/Wisteria:/home/thtu/Wisteria:ro \
-  w /bin/bash
-
-pacman -S bpf bcc bcc-tools python-bcc python-pip inetutils vim thrift python-thrift
-
-pip3 install kafka-python
-
-bpftool map create /sys/fs/bpf/mnt_ns_set type hash key 8 value 4 entries 128 \
-        name mnt_ns_set flags 0
-
-
- ./tcpconnect --mntnsmap /sys/fs/bpf/mnt_ns_set &
+ ./src/agent/tcpconnect --mntnsmap /sys/fs/bpf/mnt_ns_set &
 ./src/agent/tps --mntnsmap /sys/fs/bpf/mnt_ns_set &
 ./hello --mntnsmap /sys/fs/bpf/mnt_ns_set &
 ./src/agent/tp2s --mntnsmap /sys/fs/bpf/mnt_ns_set &
 
- cat /etc/hosts #查看ip
 
 # filter
+
+bpftool map create /sys/fs/bpf/mnt_ns_set type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+
 FILE=/sys/fs/bpf/mnt_ns_set
 if [ $(printf '\1' | od -dAn) -eq 1 ]; then
  HOST_ENDIAN_CMD=tac
