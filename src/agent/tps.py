@@ -1,9 +1,11 @@
 #!/usr/bin/python
-from __future__ import print_function
-from bcc import BPF
+
+import os
 from bcc import BPF
 from bcc.containers import filter_by_containers
 import argparse
+
+from eBPF_event_listener import ebpf_event_listener
 
 # arguments
 examples = """examples:
@@ -22,28 +24,11 @@ parser.add_argument("--mntnsmap",
                     help="trace mount namespaces in this BPF map only")
 args = parser.parse_args()
 
-# load BPF program
-prog="""
-#include <linux/sched.h>
-struct data_write {
-    u32 pid;
-    u64 ts;
-    char comm[TASK_COMM_LEN];
-    int bits;
-};
-BPF_PERF_OUTPUT(events);
-
-
-TRACEPOINT_PROBE(syscalls, sys_enter_write) {
-    struct data_write data = {};
-    u32 pid = bpf_get_current_pid_tgid();
-    data.pid=pid;
-    data.ts = bpf_ktime_get_ns();
-    bpf_get_current_comm(&data.comm, sizeof(data.comm));
-    events.perf_submit(args, &data, sizeof(data));
-    return 0;
-}
-"""
+# read BPF program
+module_path = os.path.dirname(__file__)
+filename = module_path + '/tps.c'
+with open(filename, mode="r") as file:
+    prog = file.read()
 
 prog = filter_by_containers(args) + prog
 
@@ -51,14 +36,22 @@ prog = filter_by_containers(args) + prog
 b = BPF(text=prog)
 
 # header
-print("%-18s %-16s %-6s %s" % ("TIME(s)", "COMM", "PID", "GOTBITS"))
+print("Start monitoring the sys_read system call")
 
 
-def print_event(cpu, data, size):
-    event = b["events"].event(data)
-    # print("%-18.9f %-16s %-6d %s" % (event.ts, event.comm, event.pid, event.bits))
+def print_write_event(cpu, data, size):
+    event = b["write_events"].event(data)
+    ebpf_event_listener.on_write(event)
 
-b["events"].open_perf_buffer(print_event)
+
+def print_read_event(cpu, data, size):
+    event = b["read_events"].event(data)
+    ebpf_event_listener.on_read(event)
+
+
+# loop with callback to print_event
+b["read_events"].open_perf_buffer(print_read_event)
+b["write_events"].open_perf_buffer(print_write_event)
 
 while True:
     try:
