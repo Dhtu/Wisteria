@@ -7,15 +7,19 @@ __author__ = 'SuDrang'
 
 import socket
 import os
-from kafka import KafkaProducer
+
+debug = True
+if not debug:
+    from kafka import KafkaProducer
 
 
 class EBPF_event_listener:
     relative_ts = True
-    print_message = False  #是否在命令行打印
+    print_message = debug  #是否在命令行打印
 
     def __init__(self):
-        self.producer = KafkaProducer(bootstrap_servers=['172.17.0.1:9092'])
+        if not debug:
+            self.producer = KafkaProducer(bootstrap_servers=['172.17.0.1:9092'])
         self.hostname = socket.gethostname()
         self.ip = socket.gethostbyname(self.hostname)
         self.current_pid = os.getpid()
@@ -30,7 +34,8 @@ class EBPF_event_listener:
             return False
 
     def send_to_kafka(self, topic, message):
-        self.producer.send(topic, key=None, value=message, partition=0)
+        if not debug:
+            self.producer.send(topic, key=None, value=message, partition=0)
         if self.print_message:
             print(message)
 
