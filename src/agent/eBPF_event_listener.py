@@ -12,7 +12,7 @@ from kafka import KafkaProducer
 
 class EBPF_event_listener:
     relative_ts = True
-    print_message = False
+    print_message = False  #是否在命令行打印
 
     def __init__(self):
         self.producer = KafkaProducer(bootstrap_servers=['172.17.0.1:9092'])
@@ -22,8 +22,8 @@ class EBPF_event_listener:
         self.start = 0
 
     def event_filter(self, event):
-        if event.pid != self.current_pid \
-                and event.comm != b"bash" \
+        if event.comm != b"bash" \
+            and event.pid != self.current_pid \
                 :
             return True
         else:

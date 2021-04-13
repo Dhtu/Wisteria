@@ -1,0 +1,1 @@
+./src/agent/tps.py --mntnsmap /sys/fs/bpf/mnt_ns_set
