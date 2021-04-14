@@ -25,22 +25,30 @@ args = parser.parse_args()
 # load BPF program
 prog="""
 #include <linux/sched.h>
-struct data_write {
+struct data_sock {
     u32 pid;
     u64 ts;
     char comm[TASK_COMM_LEN];
-    int bits;
+    u64 fd;
 };
-BPF_PERF_OUTPUT(events);
+BPF_PERF_OUTPUT(sock_events);
 
+//socket
+TRACEPOINT_PROBE(syscalls, sys_exit_socket) {
+    if (container_should_be_filtered()) {
+        return 0;
+    }
 
-TRACEPOINT_PROBE(syscalls, sys_enter_write) {
-    struct data_write data = {};
-    u32 pid = bpf_get_current_pid_tgid();
-    data.pid=pid;
+    struct data_sock data = {};
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    data.pid = pid;
     data.ts = bpf_ktime_get_ns();
+    data.fd = args->ret;
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
-    events.perf_submit(args, &data, sizeof(data));
+
+
+    sock_events.perf_submit(args, &data, sizeof(data));
+
     return 0;
 }
 """
@@ -55,10 +63,10 @@ print("%-18s %-16s %-6s %s" % ("TIME(s)", "COMM", "PID", "GOTBITS"))
 
 
 def print_event(cpu, data, size):
-    event = b["events"].event(data)
-    # print("%-18.9f %-16s %-6d %s" % (event.ts, event.comm, event.pid, event.bits))
+    event = b["sock_events"].event(data)
+    print("%-18.9f %-16s %-6d %-6d" % (event.ts, event.comm, event.pid,event.fd))
 
-b["events"].open_perf_buffer(print_event)
+b["sock_events"].open_perf_buffer(print_event)
 
 while True:
     try:

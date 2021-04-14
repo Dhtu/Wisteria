@@ -8,15 +8,17 @@ __author__ = 'SuDrang'
 import socket
 import os
 
-DEBUG = False
+DEBUG = True
 KAFKA_SERVER_IP = '172.17.0.1:9092'
 if not DEBUG:
     from kafka import KafkaProducer
+from fd_table import *
+from tps_item import *
 
 
 class EBPF_event_listener:
     relative_ts = True
-    print_message = DEBUG  #是否在命令行打印
+    print_message = DEBUG  # 是否在命令行打印
 
     def __init__(self):
         if not DEBUG:
@@ -25,16 +27,17 @@ class EBPF_event_listener:
         self.ip = socket.gethostbyname(self.hostname)
         self.current_pid = os.getpid()
         self.start = 0
+        self.fd_table = Fd_table()
 
     def event_filter(self, event):
         if event.comm != b"bash" \
-            and event.pid != self.current_pid \
+                and event.pid != self.current_pid \
                 :
             return True
         else:
             return False
 
-    def send_to_kafka(self, topic, message):
+    def output(self, topic, message):
         if not DEBUG:
             self.producer.send(topic, key=None, value=message, partition=0)
         if self.print_message:
@@ -55,7 +58,7 @@ class EBPF_event_listener:
             event_text += b" write "
             event_text += b"%-10s" % bytes(self.ip, encoding="utf8")
 
-            self.send_to_kafka('tps', event_text)
+            self.output('tps', event_text)
 
     def on_read(self, event):
         if self.event_filter(event):
@@ -64,7 +67,29 @@ class EBPF_event_listener:
             event_text += b" read "
             event_text += b"%-10s" % bytes(self.ip, encoding="utf8")
 
-            self.send_to_kafka('tps', event_text)
+            self.output('tps', event_text)
+
+    def on_socket(self, event):
+        if self.event_filter(event):
+            event_text = b"%-9.3f" % (self.get_ts(event.ts))
+            event_text += b" %-16s %-6d" % (event.comm, event.pid)
+            event_text += b" socket "
+            event_text += b"%-10d" % (event.fd)
+            self.output('tps', event_text)
+
+            self.fd_table.put(Sock_fd_item(event.pid, event.fd, event.ts, True))
+
+    # todo: close监听了不关心的fd，后续可以优化
+    # todo: close不一定正常返回，后续可以监听其exit
+    def on_close(self, event):
+        if self.event_filter(event):
+            event_text = b"%-9.3f" % (self.get_ts(event.ts))
+            event_text += b" %-16s %-6d" % (event.comm, event.pid)
+            event_text += b" close "
+            event_text += b"%-10d" % (event.fd)
+            self.output('tps', event_text)
+
+            self.fd_table.put(Sock_fd_item(event.pid, event.fd, event.ts, False))
 
 
 ebpf_event_listener = EBPF_event_listener()

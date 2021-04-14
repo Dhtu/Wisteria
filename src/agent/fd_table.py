@@ -5,8 +5,6 @@
 
 __author__ = 'SuDrang'
 
-QUEUE_MAXSIZE = 6
-
 import queue
 
 
@@ -82,15 +80,16 @@ class Fd_table_value:
 
 
 class Fd_table:
-    def __init__(self):
+    def __init__(self,queue_maxsize=6):
         self.m_table = dict()
+        self.queue_maxsize = queue_maxsize
 
     def put(self, sock_fd_item):
         key = (sock_fd_item.pid, sock_fd_item.fd)
 
         # 如果是第一次操作这一进程的fd，则初始化value queue
         if key not in self.m_table:
-            self.m_table[key] = Fd_table_value(QUEUE_MAXSIZE)
+            self.m_table[key] = Fd_table_value(self.queue_maxsize)
 
         self.m_table[key].put(sock_fd_item.ts, sock_fd_item.sock_flag)
 

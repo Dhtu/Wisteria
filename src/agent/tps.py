@@ -48,10 +48,21 @@ def print_read_event(cpu, data, size):
     event = b["read_events"].event(data)
     ebpf_event_listener.on_read(event)
 
+def process_sock_event(cpu, data, size):
+    event = b["sock_events"].event(data)
+    ebpf_event_listener.on_socket(event)
+
+
+def process_close_event(cpu, data, size):
+    event = b["close_events"].event(data)
+    ebpf_event_listener.on_close(event)
+
 
 # loop with callback to print_event
-b["read_events"].open_perf_buffer(print_read_event)
-b["write_events"].open_perf_buffer(print_write_event)
+# b["read_events"].open_perf_buffer(print_read_event)
+# b["write_events"].open_perf_buffer(print_write_event)
+b["sock_events"].open_perf_buffer(process_sock_event)
+b["close_events"].open_perf_buffer(process_close_event)
 
 while True:
     try:
