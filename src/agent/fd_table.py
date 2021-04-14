@@ -10,18 +10,17 @@ QUEUE_MAXSIZE = 6
 import queue
 
 
+# def on socket(events):
+#     sock_fd_item = Sock_fd_item(1,2,200,True)
+#
+# def on_close(events):
+#     sock_fd_item = Sock_fd_item(1, 2, 200, False)
 class Sock_fd_item:
     def __init__(self, pid, fd, ts, sock_flag):
         self.pid = pid
         self.fd = fd
         self.ts = ts
         self.sock_flag = sock_flag
-
-# def on socket(events):
-#     sock_fd_item = Sock_fd_item(1,2,200,True)
-#
-# def on_close(events):
-#     sock_fd_item = Sock_fd_item(1, 2, 200, False)
 
 
 class Fd_table_value_item:
@@ -56,26 +55,30 @@ class Fd_table_value:
         return True
 
     def is_sock(self, ts):
-        l = list(self.q)
+        l = list(self.q.queue)
         size = len(l)
 
         # 只有一个值（一般是初始化的值）
         if size == 1:
 
             # 左边界是socket
-            if l[0].sockflag and l[0].ts < ts:
+            if l[0].sock_flag and l[0].ts < ts:
                 return True
             else:
                 return False
         else:
-            for item_pair in [l[i:i + 1] for i in range(size - 1)]:
+            for item_pair in [l[i:i + 2] for i in range(size - 1)]:
 
                 # 找到对应区间，左边界是socket
                 if self.is_sock_interval(ts, item_pair[0], item_pair[1]):
                     return True
 
             # 未找到对应边界
-            return False
+            # 最后一次记录是socket
+            if l[size-1].sock_flag and l[size-1].ts < ts:
+                return True
+            else:
+                return False
 
 
 class Fd_table:
