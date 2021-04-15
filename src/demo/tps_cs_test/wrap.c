@@ -1,6 +1,7 @@
 ﻿  #include <stdlib.h>
   #include <errno.h>
-  #include <sys/socket.h>
+#include"wrap.h"  
+#include <sys/socket.h>
   void perr_exit(const char *s)
   {
       perror(s);
@@ -122,7 +123,7 @@
       return n;
   }
  
-  static ssize_t my_read(int fd, char *ptr)
+  ssize_t my_read(int fd, char *ptr)
   {
       static int read_cnt;
       static char *read_ptr;

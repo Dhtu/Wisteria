@@ -6,7 +6,7 @@
   #include <signal.h>
   #include <sys/wait.h>
   #include <sys/types.h>
-  #include "wrap.h"
+  #include "wrap.c"
  
   #define MAXLINE 80
   #define SERV_PORT 6666

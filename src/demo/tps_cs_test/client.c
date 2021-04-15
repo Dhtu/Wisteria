@@ -3,7 +3,7 @@
   #include <string.h>
   #include <unistd.h>
   #include <netinet/in.h>
-  #include "wrap.h"
+  #include "wrap.c"
  
   #define MAXLINE 80
   #define SERV_PORT 6666
