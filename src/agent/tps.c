@@ -260,7 +260,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_accept) {
         return 0;
     }
 
-    struct data_sock data = {};
+    struct data_accept data = {};
     u32 pid = bpf_get_current_pid_tgid() >> 32;
     data.pid = pid;
     data.ts = bpf_ktime_get_ns();
@@ -273,21 +273,51 @@ TRACEPOINT_PROBE(syscalls, sys_exit_accept) {
     return 0;
 }
 
-////accept4
-//TRACEPOINT_PROBE(syscalls, sys_exit_accept4) {
-//    if (container_should_be_filtered()) {
-//        return 0;
-//    }
-//
-//    struct data_sock data = {};
-//    u32 pid = bpf_get_current_pid_tgid() >> 32;
-//    data.pid = pid;
-//    data.ts = bpf_ktime_get_ns();
-//    data.fd = args->ret;
-//    bpf_get_current_comm(&data.comm, sizeof(data.comm));
-//
-//
-//    sock_events.perf_submit(args, &data, sizeof(data));
-//
-//    return 0;
-//}
+//accept4
+TRACEPOINT_PROBE(syscalls, sys_exit_accept4) {
+    if (container_should_be_filtered()) {
+        return 0;
+    }
+
+    struct data_accept data = {};
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    data.pid = pid;
+    data.ts = bpf_ktime_get_ns();
+    data.fd = args->ret;
+    bpf_get_current_comm(&data.comm, sizeof(data.comm));
+
+
+    accept_events.perf_submit(args, &data, sizeof(data));
+
+    return 0;
+}
+
+
+struct data_fork {
+    u32 pid;
+    u64 ts;
+    char comm[TASK_COMM_LEN];
+    long ret;
+};
+BPF_PERF_OUTPUT(fork_events);
+
+//fork
+TRACEPOINT_PROBE(syscalls, sys_exit_fork) {
+    if (container_should_be_filtered()) {
+        return 0;
+    }
+
+    struct data_fork data = {};
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    data.pid = pid;
+    data.ts = bpf_ktime_get_ns();
+    data.ret = args->ret;
+    bpf_get_current_comm(&data.comm, sizeof(data.comm));
+
+
+    fork_events.perf_submit(args, &data, sizeof(data));
+
+
+
+    return 0;
+}

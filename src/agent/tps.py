@@ -63,13 +63,17 @@ def process_accept_event(cpu, data, size):
     event = b["accept_events"].event(data)
     ebpf_event_listener.on_accept(event)
 
+def process_fork_event(cpu, data, size):
+    event = b["fork_events"].event(data)
+    ebpf_event_listener.on_fork(event)
 
 # loop with callback to print_event
-b["read_events"].open_perf_buffer(print_read_event)
-b["write_events"].open_perf_buffer(print_write_event)
-b["sock_events"].open_perf_buffer(process_sock_event)
-b["close_events"].open_perf_buffer(process_close_event)
-b["accept_events"].open_perf_buffer(process_accept_event)
+# b["read_events"].open_perf_buffer(print_read_event)
+# b["write_events"].open_perf_buffer(print_write_event)
+# b["sock_events"].open_perf_buffer(process_sock_event)
+# b["close_events"].open_perf_buffer(process_close_event)
+# b["accept_events"].open_perf_buffer(process_accept_event)
+b["fork_events"].open_perf_buffer(process_fork_event)
 
 while True:
     try:

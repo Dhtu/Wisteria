@@ -39,6 +39,13 @@ class EBPF_event_listener:
         else:
             return False
 
+    @staticmethod
+    def debug_print(ts, comm, pid, fd, message):
+        event_text = b"%-9.3f" % ts
+        event_text += b" %-16s %-10d %-6d" % (comm, pid, fd)
+        event_text += message
+        return event_text
+
     def output(self, topic, message):
         if not DEBUG:
             self.producer.send(topic, key=None, value=message, partition=0)
@@ -59,13 +66,11 @@ class EBPF_event_listener:
             tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
             is_sock = self.fd_table.is_sock(tps_item)
 
-            event_text = b"%-9.3f" % (self.get_ts(event.ts))
-            event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
-            event_text += b" write "
-            event_text += b"%-10s" % bytes(self.ip, encoding="utf8")
+            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"write")
+            if is_sock:
+                event_text += b' is sock'
 
             self.output('tps', event_text)
-            print(is_sock)
 
     def on_read(self, event):
 
@@ -73,20 +78,15 @@ class EBPF_event_listener:
             tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
             is_sock = self.fd_table.is_sock(tps_item)
 
-            event_text = b"%-9.3f" % (self.get_ts(event.ts))
-            event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
-            event_text += b" read "
-            event_text += b"%-10s" % bytes(self.ip, encoding="utf8")
+            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"read")
+            if is_sock:
+                event_text += b' is sock'
 
             self.output('tps', event_text)
-            print(is_sock)
 
     def on_socket(self, event):
         if self.event_filter(event):
-            event_text = b"%-9.3f" % (self.get_ts(event.ts))
-            event_text += b" %-16s %-6d" % (event.comm, event.pid)
-            event_text += b"%-10d" % event.fd
-            event_text += b" socket "
+            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"socket")
 
             self.output('tps', event_text)
 
@@ -94,10 +94,7 @@ class EBPF_event_listener:
 
     def on_accept(self, event):
         if self.event_filter(event):
-            event_text = b"%-9.3f" % (self.get_ts(event.ts))
-            event_text += b" %-16s %-6d" % (event.comm, event.pid)
-            event_text += b"%-10d" % event.fd
-            event_text += b" accept "
+            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"accept")
 
             self.output('tps', event_text)
 
@@ -107,14 +104,16 @@ class EBPF_event_listener:
     # todo: close不一定正常返回，后续可以监听其exit, 只监听enter出现了多次重复close的情况，不知道是否与此有关
     def on_close(self, event):
         if self.event_filter(event):
-            event_text = b"%-9.3f" % (self.get_ts(event.ts))
-            event_text += b" %-16s %-6d" % (event.comm, event.pid)
-            event_text += b"%-10d" % event.fd
-            event_text += b" close "
+            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"close")
 
             self.output('tps', event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, False))
+
+
+    def on_fork(self,event):
+        event_text = self.debug_print(self.get_ts(event.ts),event.comm,event.pid,event.ret,b"fork")
+        self.output('tps',event_text)
 
 
 ebpf_event_listener = EBPF_event_listener()
