@@ -87,7 +87,6 @@ class Fd_table:
         self.queue_maxsize = queue_maxsize
         self.listdir()
 
-
     def listdir(self):
         list0 = list()
         path = os.path.expanduser("/proc")
@@ -102,14 +101,10 @@ class Fd_table:
                 for f in os.listdir(path):
                     info = os.stat(path + "/" + f)
                     if stat.S_ISSOCK(info.st_mode):
-                        # list2 = [i, f]
-                        # list1.append(list2)
-                        self.put(i,f)
+                        self.put(int(i), int(f))
             except OSError:
                 pass
             continue
-        # for s in list1:  # 判断是否存入进去了
-        #     print(s)
 
     @staticmethod
     def is_number(s):
@@ -127,7 +122,6 @@ class Fd_table:
             pass
 
         return False
-
 
     def put_item(self, sock_fd_item):
         key = (sock_fd_item.pid, sock_fd_item.fd)

@@ -15,6 +15,7 @@ if not DEBUG:
 from fd_table import *
 from tps_item import *
 
+
 class EBPF_event_listener:
     relative_ts = True
     print_message = DEBUG  # 是否在命令行打印
@@ -30,6 +31,8 @@ class EBPF_event_listener:
 
     def event_filter(self, event):
         if event.comm != b"bash" \
+                and event.comm != b"ls" \
+                and event.comm != b"ps" \
                 and event.pid != self.current_pid \
                 :
             return True
@@ -52,33 +55,50 @@ class EBPF_event_listener:
 
     def on_write(self, event):
 
-        tps_item = Tps_item(event.pid,event.fd,event.ts,False,event.comm)
+        if self.event_filter(event):
+            tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
+            is_sock = self.fd_table.is_sock(tps_item)
 
-        if self.event_filter(event) and self.fd_table.is_sock(tps_item):
             event_text = b"%-9.3f" % (self.get_ts(event.ts))
             event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
             event_text += b" write "
             event_text += b"%-10s" % bytes(self.ip, encoding="utf8")
 
             self.output('tps', event_text)
+            print(is_sock)
 
     def on_read(self, event):
-        tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
 
-        if self.event_filter(event) and self.fd_table.is_sock(tps_item):
+        if self.event_filter(event):
+            tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
+            is_sock = self.fd_table.is_sock(tps_item)
+
             event_text = b"%-9.3f" % (self.get_ts(event.ts))
             event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
             event_text += b" read "
             event_text += b"%-10s" % bytes(self.ip, encoding="utf8")
 
             self.output('tps', event_text)
+            print(is_sock)
 
     def on_socket(self, event):
         if self.event_filter(event):
             event_text = b"%-9.3f" % (self.get_ts(event.ts))
             event_text += b" %-16s %-6d" % (event.comm, event.pid)
-            event_text += b" socket "
             event_text += b"%-10d" % event.fd
+            event_text += b" socket "
+
+            self.output('tps', event_text)
+
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
+
+    def on_accept(self, event):
+        if self.event_filter(event):
+            event_text = b"%-9.3f" % (self.get_ts(event.ts))
+            event_text += b" %-16s %-6d" % (event.comm, event.pid)
+            event_text += b"%-10d" % event.fd
+            event_text += b" accept "
+
             self.output('tps', event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
@@ -89,9 +109,10 @@ class EBPF_event_listener:
         if self.event_filter(event):
             event_text = b"%-9.3f" % (self.get_ts(event.ts))
             event_text += b" %-16s %-6d" % (event.comm, event.pid)
-            event_text += b" close "
             event_text += b"%-10d" % event.fd
-            # self.output('tps', event_text)
+            event_text += b" close "
+
+            self.output('tps', event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, False))
 
