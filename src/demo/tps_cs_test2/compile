@@ -1,0 +1,5 @@
+gcc -c client.c -o client.o
+gcc -c server.c -o server.o
+gcc -c wrap.c -o wrap.o
+gcc client.o wrap.o -o client
+gcc server.o wrap.o -o server
