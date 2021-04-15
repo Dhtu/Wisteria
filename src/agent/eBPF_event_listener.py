@@ -13,7 +13,7 @@ KAFKA_SERVER_IP = '172.17.0.1:9092'
 if not DEBUG:
     from kafka import KafkaProducer
 from fd_table import *
-
+from tps_item import *
 
 class EBPF_event_listener:
     relative_ts = True
@@ -51,7 +51,10 @@ class EBPF_event_listener:
             return event_ts
 
     def on_write(self, event):
-        if self.event_filter(event):
+
+        tps_item = Tps_item(event.pid,event.fd,event.ts,False,event.comm)
+
+        if self.event_filter(event) and self.fd_table.is_sock(tps_item):
             event_text = b"%-9.3f" % (self.get_ts(event.ts))
             event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
             event_text += b" write "
@@ -60,7 +63,9 @@ class EBPF_event_listener:
             self.output('tps', event_text)
 
     def on_read(self, event):
-        if self.event_filter(event):
+        tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
+
+        if self.event_filter(event) and self.fd_table.is_sock(tps_item):
             event_text = b"%-9.3f" % (self.get_ts(event.ts))
             event_text += b" %-16s %-6d %-6d" % (event.comm, event.pid, event.fd)
             event_text += b" read "
@@ -76,7 +81,7 @@ class EBPF_event_listener:
             event_text += b"%-10d" % event.fd
             self.output('tps', event_text)
 
-            self.fd_table.put(Sock_fd_item(event.pid, event.fd, event.ts, True))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
 
     # todo: close监听了不关心的fd，后续可以优化
     # todo: close不一定正常返回，后续可以监听其exit, 只监听enter出现了多次重复close的情况，不知道是否与此有关
@@ -86,9 +91,9 @@ class EBPF_event_listener:
             event_text += b" %-16s %-6d" % (event.comm, event.pid)
             event_text += b" close "
             event_text += b"%-10d" % event.fd
-            self.output('tps', event_text)
+            # self.output('tps', event_text)
 
-            self.fd_table.put(Sock_fd_item(event.pid, event.fd, event.ts, False))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, False))
 
 
 ebpf_event_listener = EBPF_event_listener()

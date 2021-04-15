@@ -59,8 +59,8 @@ def process_close_event(cpu, data, size):
 
 
 # loop with callback to print_event
-# b["read_events"].open_perf_buffer(print_read_event)
-# b["write_events"].open_perf_buffer(print_write_event)
+b["read_events"].open_perf_buffer(print_read_event)
+b["write_events"].open_perf_buffer(print_write_event)
 b["sock_events"].open_perf_buffer(process_sock_event)
 b["close_events"].open_perf_buffer(process_close_event)
 

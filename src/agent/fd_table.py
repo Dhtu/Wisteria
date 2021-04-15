@@ -6,6 +6,8 @@
 __author__ = 'SuDrang'
 
 import queue
+import os
+import stat
 
 
 # def on socket(events):
@@ -73,18 +75,61 @@ class Fd_table_value:
 
             # 未找到对应边界
             # 最后一次记录是socket
-            if l[size-1].sock_flag and l[size-1].ts < ts:
+            if l[size - 1].sock_flag and l[size - 1].ts < ts:
                 return True
             else:
                 return False
 
 
 class Fd_table:
-    def __init__(self,queue_maxsize=6):
+    def __init__(self, queue_maxsize=6):
         self.m_table = dict()
         self.queue_maxsize = queue_maxsize
+        self.listdir()
 
-    def put(self, sock_fd_item):
+
+    def listdir(self):
+        list0 = list()
+        path = os.path.expanduser("/proc")
+        for f in os.listdir(path):
+            if self.is_number(f.strip()):
+                list0.append(f.strip())
+        # list1 = []
+
+        for i in list0:
+            path = "/proc/" + i + "/fd"
+            try:
+                for f in os.listdir(path):
+                    info = os.stat(path + "/" + f)
+                    if stat.S_ISSOCK(info.st_mode):
+                        # list2 = [i, f]
+                        # list1.append(list2)
+                        self.put(i,f)
+            except OSError:
+                pass
+            continue
+        # for s in list1:  # 判断是否存入进去了
+        #     print(s)
+
+    @staticmethod
+    def is_number(s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            pass
+
+        try:
+            import unicodedata
+            unicodedata.numeric(s)
+            return True
+        except (TypeError, ValueError):
+            pass
+
+        return False
+
+
+    def put_item(self, sock_fd_item):
         key = (sock_fd_item.pid, sock_fd_item.fd)
 
         # 如果是第一次操作这一进程的fd，则初始化value queue
@@ -93,6 +138,14 @@ class Fd_table:
 
         self.m_table[key].put(sock_fd_item.ts, sock_fd_item.sock_flag)
 
+    def put(self, pid, fd):
+        key = (pid, fd)
+
+        # 如果是第一次操作这一进程的fd，则初始化value queue
+        if key not in self.m_table:
+            self.m_table[key] = Fd_table_value(self.queue_maxsize)
+
+        self.m_table[key].put(0, True)
 
     def is_sock(self, tps_item):
         key = (tps_item.pid, tps_item.fd)
