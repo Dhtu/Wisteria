@@ -5,8 +5,6 @@ from bcc import BPF
 from bcc.containers import filter_by_containers
 import argparse
 
-from eBPF_event_listener import ebpf_event_listener
-
 # arguments
 examples = """examples:
     ./tps           # trace system tps
@@ -41,10 +39,8 @@ print("Start monitoring the sys_read system call")
 
 def sys_exit_close(cpu, data, size):
     event = b["close_events"].event(data)
-    # ebpf_event_listener.on_close(event)
-    print("hello")
-    print(event.pid)
-    print(event.fd)
+    print(str(event.comm) + "   " + str(event.pid) + "  " + str(event.fd) + "   " + str(event.ret))
+
 
 b["close_events"].open_perf_buffer(sys_exit_close)
 

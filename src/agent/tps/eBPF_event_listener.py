@@ -70,7 +70,7 @@ class EBPF_event_listener:
             if is_sock:
                 event_text += b' is sock'
 
-            self.output('tps', event_text)
+                self.output('tps', event_text)
 
     def on_read(self, event):
 
@@ -82,7 +82,7 @@ class EBPF_event_listener:
             if is_sock:
                 event_text += b' is sock'
 
-            self.output('tps', event_text)
+                self.output('tps', event_text)
 
     def on_socket(self, event):
         if self.event_filter(event):
