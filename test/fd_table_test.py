@@ -1,6 +1,6 @@
 import unittest
-from agent.fd_table import *
-from agent.tps_item import *
+from agent.tps.fd_table import *
+from agent.tps.tps_item import *
 
 class MyTestCase(unittest.TestCase):
 

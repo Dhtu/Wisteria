@@ -5,7 +5,7 @@ from bcc import BPF
 from bcc.containers import filter_by_containers
 import argparse
 
-from eBPF_event_listener import ebpf_event_listener
+from agent.tps.eBPF_event_listener import ebpf_event_listener
 
 # arguments
 examples = """examples:

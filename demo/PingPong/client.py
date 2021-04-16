@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.append('./pygen')
+sys.path.append('pygen')
 
 from thrift import Thrift
 from thrift.transport import TSocket

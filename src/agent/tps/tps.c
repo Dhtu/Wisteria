@@ -302,7 +302,7 @@ struct data_fork {
 BPF_PERF_OUTPUT(fork_events);
 
 //fork
-TRACEPOINT_PROBE(syscalls, sys_exit_fork) {
+TRACEPOINT_PROBE(syscalls, sys_exit_clone) {
     if (container_should_be_filtered()) {
         return 0;
     }

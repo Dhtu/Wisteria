@@ -42,7 +42,7 @@ class EBPF_event_listener:
     @staticmethod
     def debug_print(ts, comm, pid, fd, message):
         event_text = b"%-9.3f" % ts
-        event_text += b" %-16s %-10d %-6d" % (comm, pid, fd)
+        event_text += b" %-16s %-10d %-10d" % (comm, pid, fd)
         event_text += message
         return event_text
 
@@ -112,8 +112,9 @@ class EBPF_event_listener:
 
 
     def on_fork(self,event):
-        event_text = self.debug_print(self.get_ts(event.ts),event.comm,event.pid,event.ret,b"fork")
-        self.output('tps',event_text)
+        if self.event_filter(event):
+            event_text = self.debug_print(self.get_ts(event.ts),event.comm,event.pid,event.ret,b"fork")
+            self.output('tps',event_text)
 
 
 ebpf_event_listener = EBPF_event_listener()
