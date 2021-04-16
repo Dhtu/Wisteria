@@ -307,17 +307,17 @@ TRACEPOINT_PROBE(syscalls, sys_exit_clone) {
         return 0;
     }
 
-    struct data_fork data = {};
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    data.pid = pid;
-    data.ts = bpf_ktime_get_ns();
-    data.ret = args->ret;
-    bpf_get_current_comm(&data.comm, sizeof(data.comm));
+    if (args->ret != 0){
+        struct data_fork data = {};
+        u32 pid = bpf_get_current_pid_tgid() >> 32;
+        data.pid = pid;
+        data.ts = bpf_ktime_get_ns();
+        data.ret = args->ret;
+        bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-    fork_events.perf_submit(args, &data, sizeof(data));
-
-
+        fork_events.perf_submit(args, &data, sizeof(data));
+    }
 
     return 0;
 }
