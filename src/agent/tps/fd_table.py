@@ -136,8 +136,9 @@ class Fd_table:
     def map_delete(self,pid, fd):
         try:
             self.m_fd_map[pid].remove(fd)
-        except KeyError and self.DEBUG:
-            print("pid=", pid, "fd=", fd, "not in map")
+        except KeyError :
+            if self.DEBUG:
+                print("pid=", pid, "fd=", fd, "not in map")
 
     def map_copy(self,pid, ppid):  # pid is father,ppid is son
         self.m_fd_map[ppid] = copy.deepcopy(self.m_fd_map[pid])

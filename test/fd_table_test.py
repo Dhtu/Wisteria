@@ -118,7 +118,6 @@ class MyTestCase(unittest.TestCase):
         m_table.put_item(Sock_fd_item(12, 12, 12, True))
         m_table.put_item(Sock_fd_item(12, 12, 13, True))
         m_table.put_item(Sock_fd_item(12, 12, 14, True))
-        m_table.put_item(Sock_fd_item(12, 12, 17, False))
         ret = m_table.is_sock(Tps_item(12, 12, 15, True, "comm"))
         self.assertEqual(True, ret)
 
@@ -136,6 +135,54 @@ class MyTestCase(unittest.TestCase):
         m_table.put_item(Sock_fd_item(12, 12, 17, False))
         ret = m_table.is_sock(Tps_item(12, 12, 15, True, "comm"))
         self.assertEqual(False, ret)
+
+    # 6.1. fork测试
+    def test6_1(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, True))
+        m_table.map_copy(12,13)
+        ret = m_table.is_sock(Tps_item(13, 12, 5, True, "comm"))
+        self.assertEqual(True, ret)
+
+    # 6.2. 两次fork测试
+    def test6_2(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, True))
+        m_table.map_copy(12, 13)
+        m_table.put_item(Sock_fd_item(13, 5, 2, True))
+        m_table.map_copy(13,14)
+        ret = m_table.is_sock(Tps_item(14, 5, 5, True, "comm"))
+        self.assertEqual(True, ret)
+
+    # 6.3 复杂fork测试，类似5.2
+    def test6_3(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, True))
+        m_table.put_item(Sock_fd_item(12, 12, 6, False))
+        m_table.put_item(Sock_fd_item(12, 12, 8, True))
+        m_table.put_item(Sock_fd_item(12, 12, 10, True))
+        m_table.put_item(Sock_fd_item(12, 12, 11, False))
+        m_table.put_item(Sock_fd_item(12, 12, 12, True))
+        m_table.put_item(Sock_fd_item(12, 12, 13, True))
+        m_table.put_item(Sock_fd_item(12, 12, 14, False))
+        m_table.put_item(Sock_fd_item(12, 12, 15, False))
+        m_table.map_copy(12, 13)
+        ret = m_table.is_sock(Tps_item(13, 12, 17, True, "comm"))
+        self.assertEqual(False, ret)
+
+    # 6.3 复杂fork测试，类似5.3
+    def test6_4(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, True))
+        m_table.put_item(Sock_fd_item(12, 12, 6, False))
+        m_table.put_item(Sock_fd_item(12, 12, 8, True))
+        m_table.put_item(Sock_fd_item(12, 12, 10, True))
+        m_table.put_item(Sock_fd_item(12, 12, 11, False))
+        m_table.put_item(Sock_fd_item(12, 12, 12, True))
+        m_table.put_item(Sock_fd_item(12, 12, 13, True))
+        m_table.put_item(Sock_fd_item(12, 12, 14, True))
+        ret = m_table.is_sock(Tps_item(13, 12, 15, True, "comm"))
+        self.assertEqual(True, ret)
 
 if __name__ == '__main__':
     unittest.main()
