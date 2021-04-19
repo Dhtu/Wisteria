@@ -8,7 +8,9 @@ __author__ = 'SuDrang'
 import queue
 import os
 import stat
+import copy
 
+DEBUG = False
 
 # def on socket(events):
 #     sock_fd_item = Sock_fd_item(1,2,200,True)
@@ -83,9 +85,11 @@ class Fd_table_value:
 
 class Fd_table:
     def __init__(self, queue_maxsize=6):
-        self.m_table = dict()
+        self.m_table = dict() # fd操作记录表
+        self.m_fd_map = {} # pid-fd表
         self.queue_maxsize = queue_maxsize
         self.listdir()
+        self.DEBUG = DEBUG
 
     def listdir(self):
         list0 = list()
@@ -123,6 +127,24 @@ class Fd_table:
 
         return False
 
+    def map_add(self, pid, fd):
+        if pid in self.m_fd_map:
+            self.m_fd_map[pid].add(fd)
+        else:
+            self.m_fd_map[pid] = {fd}
+
+    def map_delete(self,pid, fd):
+        try:
+            self.m_fd_map[pid].remove(fd)
+        except KeyError and self.DEBUG:
+            print("pid=", pid, "fd=", fd, "not in map")
+
+    def map_copy(self,pid, ppid):  # pid is father,ppid is son
+        self.m_fd_map[ppid] = copy.deepcopy(self.m_fd_map[pid])
+
+
+
+    # 添加fd操作记录
     def put_item(self, sock_fd_item):
         key = (sock_fd_item.pid, sock_fd_item.fd)
 
@@ -132,8 +154,17 @@ class Fd_table:
 
         self.m_table[key].put(sock_fd_item.ts, sock_fd_item.sock_flag)
 
+        if sock_fd_item.sock_flag:
+            self.map_add(sock_fd_item.pid,sock_fd_item.fd)
+        else:
+            self.map_delete(sock_fd_item.pid,sock_fd_item.fd)
+
+
+    # 初始化table
     def put(self, pid, fd):
         key = (pid, fd)
+
+        self.map_add(pid,fd)
 
         # 如果是第一次操作这一进程的fd，则初始化value queue
         if key not in self.m_table:

@@ -74,8 +74,10 @@ class EBPF_event_listener:
                                            event.pid, event.fd, b"write")
             if is_sock:
                 event_text += b' is sock'
+            else:
+                event_text += b' is not sock'
 
-                self.output('tps', event_text)
+            self.output('tps', event_text)
 
     def on_read(self, event):
 
@@ -116,6 +118,7 @@ class EBPF_event_listener:
 
     def on_fork(self, event):
         if self.event_filter(event):
+            self.fd_table.map_copy(event.pid,event.ret)
             event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.ret, b"fork")
             self.output('tps', event_text)
 
