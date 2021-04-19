@@ -1,0 +1,9 @@
+# 4.19
+1. fork系统监听 @hfx
+2. 多次重复close调用
+3. read,write,socket未监听exit 2/3
+3. 基于线程的测试程序
+4. TCP服务端与用户端判断！（connect与accept）
+5. vfork fork系统调用处理
+6. read, write业务处理逻辑
+7. UDP cs判断

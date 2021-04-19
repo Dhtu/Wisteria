@@ -5,7 +5,6 @@
 
 __author__ = 'SuDrang'
 
-import os
 import socket
 
 DEBUG = True
@@ -31,8 +30,6 @@ class EBPF_event_listener:
 
     def event_filter(self, event):
         if event.comm != b"bash" \
-                and event.comm != b"ls" \
-                and event.comm != b"ps" \
                 and event.pid != self.current_pid \
                 :
             return True
@@ -42,6 +39,13 @@ class EBPF_event_listener:
     @staticmethod
     def debug_print(ts, comm, pid, fd, message):
         event_text = b"%-9.3f" % ts
+        event_text += b" %-16s %-10d %-10d" % (comm, pid, fd)
+        event_text += message
+        return event_text
+
+    @staticmethod
+    def debug_print2(enter_ts, exit_ts, comm, pid, fd, message):
+        event_text = b"%-9.3f %-9.3f " % (enter_ts, exit_ts)
         event_text += b" %-16s %-10d %-10d" % (comm, pid, fd)
         event_text += message
         return event_text
@@ -63,10 +67,11 @@ class EBPF_event_listener:
     def on_write(self, event):
 
         if self.event_filter(event):
-            tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
+            tps_item = Tps_item(event.pid, event.fd, event.enter_ts, False, event.comm)
             is_sock = self.fd_table.is_sock(tps_item)
 
-            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"write")
+            event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
+                                           event.pid, event.fd, b"write")
             if is_sock:
                 event_text += b' is sock'
 
@@ -75,10 +80,11 @@ class EBPF_event_listener:
     def on_read(self, event):
 
         if self.event_filter(event):
-            tps_item = Tps_item(event.pid, event.fd, event.ts, False, event.comm)
+            tps_item = Tps_item(event.pid, event.fd, event.enter_ts, False, event.comm)
             is_sock = self.fd_table.is_sock(tps_item)
 
-            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"read")
+            event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
+                                           event.pid, event.fd, b"read")
             if is_sock:
                 event_text += b' is sock'
 
@@ -100,8 +106,6 @@ class EBPF_event_listener:
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
 
-    # todo: close监听了不关心的fd，后续可以优化
-    # todo: close不一定正常返回，后续可以监听其exit, 只监听enter出现了多次重复close的情况，不知道是否与此有关
     def on_close(self, event):
         if self.event_filter(event):
             event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"close")
@@ -110,11 +114,10 @@ class EBPF_event_listener:
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, False))
 
-
-    def on_fork(self,event):
+    def on_fork(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.ts),event.comm,event.pid,event.ret,b"fork")
-            self.output('tps',event_text)
+            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.ret, b"fork")
+            self.output('tps', event_text)
 
 
 ebpf_event_listener = EBPF_event_listener()
