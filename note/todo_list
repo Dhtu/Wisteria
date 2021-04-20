@@ -18,6 +18,10 @@
 5. read, write业务处理逻辑！
 6. ~~事件打印卡顿
 
+#4.21
 1. 排序
 2. c/s 匹配read 跟write
 3. 计算延时
+
+
+1. fork带来的bug：accept于close之前发来消息（记录队列时间顺序不一致）

@@ -75,12 +75,12 @@ class EBPF_event_listener:
             event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
                                            event.pid, event.fd, b"write")
             if is_sock:
-                # event_text += b' is sock'
-                print("read")
-                self.output('tps', event_text)
-            # else:
-                # event_text += b' is not sock'
-
+                event_text += b' is sock'
+                # print("read")
+                # self.output('tps', event_text)
+            else:
+                event_text += b' is not sock'
+            self.output('tps', event_text)
 
     def on_read(self, event):
 
@@ -91,13 +91,13 @@ class EBPF_event_listener:
             event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
                                            event.pid, event.fd, b"read")
             if is_sock:
-                # event_text += b' is sock'
-                print("write")
-                self.output('tps', event_text)
-            # else:
-                # event_text += b' is not sock'
+                event_text += b' is sock'
+                # print("write")
 
+            else:
+                event_text += b' is not sock'
 
+            self.output('tps', event_text)
 
     def on_socket(self, event):
         if self.event_filter(event):
