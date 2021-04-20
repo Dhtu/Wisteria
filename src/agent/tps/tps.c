@@ -538,7 +538,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_clone) {
     return 0;
 }
 
-#-----------------------------------------------------------------------
+//#-----------------------------------------------------------------------
 TRACEPOINT_PROBE(syscalls, sys_exit_fork) {
     if (container_should_be_filtered()) {
         return 0;
