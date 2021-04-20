@@ -170,7 +170,7 @@ class MyTestCase(unittest.TestCase):
         ret = m_table.is_sock(Tps_item(13, 12, 17, True, "comm"))
         self.assertEqual(False, ret)
 
-    # 6.3 复杂fork测试，类似5.3
+    # 6.4 复杂fork测试，类似5.3
     def test6_4(self):
         m_table = Fd_table()
         m_table.put_item(Sock_fd_item(12, 12, 0, True))
