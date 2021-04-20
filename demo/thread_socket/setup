@@ -1,0 +1,2 @@
+gcc server.c -o /home/thtu/server -pthread
+gcc client.c -o /home/thtu/client -pthread

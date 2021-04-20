@@ -30,6 +30,8 @@ class EBPF_event_listener:
 
     def event_filter(self, event):
         if event.comm != b"bash" \
+                and event.comm != b"ls" \
+                and event.comm != b"ps" \
                 and event.pid != self.current_pid \
                 :
             return True
@@ -73,11 +75,12 @@ class EBPF_event_listener:
             event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
                                            event.pid, event.fd, b"write")
             if is_sock:
-                event_text += b' is sock'
-            else:
-                event_text += b' is not sock'
+                # event_text += b' is sock'
+                print("read")
+                self.output('tps', event_text)
+            # else:
+                # event_text += b' is not sock'
 
-            self.output('tps', event_text)
 
     def on_read(self, event):
 
@@ -88,9 +91,13 @@ class EBPF_event_listener:
             event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
                                            event.pid, event.fd, b"read")
             if is_sock:
-                event_text += b' is sock'
-
+                # event_text += b' is sock'
+                print("write")
                 self.output('tps', event_text)
+            # else:
+                # event_text += b' is not sock'
+
+
 
     def on_socket(self, event):
         if self.event_filter(event):
@@ -118,7 +125,7 @@ class EBPF_event_listener:
 
     def on_fork(self, event):
         if self.event_filter(event):
-            self.fd_table.map_copy(event.pid,event.ret)
+            self.fd_table.map_copy(event.pid, event.ret)
             event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.ret, b"fork")
             self.output('tps', event_text)
 

@@ -11,7 +11,8 @@
 
 
 # 4.20
-1. read, write业务处理逻辑 UDP TCP服务端与客户端
+1. read, write业务处理逻辑
 2. fd_table的copy函数 !
 3. connect与accept vfork fork系统调用处理 @hfx
-4. tcp客户端 服务端
+4. tcp客户端 服务端 !
+5. read, write业务处理逻辑！
