@@ -10,7 +10,7 @@ import os
 import stat
 import copy
 
-DEBUG = False
+FD_TABLE_DEBUG = False
 
 # def on socket(events):
 #     sock_fd_item = Sock_fd_item(1,2,200,True)
@@ -89,7 +89,7 @@ class Fd_table:
         self.m_fd_map = {} # pid-fd表
         self.queue_maxsize = queue_maxsize
         self.listdir()
-        self.DEBUG = DEBUG
+        self.DEBUG = FD_TABLE_DEBUG
 
     def listdir(self):
         list0 = list()
