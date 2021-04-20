@@ -457,6 +457,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_close) {
         }
         data.fd = *fd;
         close_events.perf_submit(args, &data, sizeof(data));
+        stats.delete(&pid);
     }
     return 0;
 }
@@ -584,25 +585,46 @@ struct data_connect {
     u32 pid;
     u64 ts;
     char comm[TASK_COMM_LEN];
-    long ret;
+    u64 fd;
 };
 BPF_PERF_OUTPUT(connect_events);
-TRACEPOINT_PROBE(syscalls, sys_exit_connect) {
+TRACEPOINT_PROBE(syscalls, sys_enter_connect) {
     if (container_should_be_filtered()) {
         return 0;
     }
 
-    if (args->ret != 0){
-        struct data_connect data = {};
-        u32 pid = bpf_get_current_pid_tgid() >> 32;
-        data.pid = pid;
-        data.ts = bpf_ktime_get_ns();
-        data.ret = args->ret;
-        bpf_get_current_comm(&data.comm, sizeof(data.comm));
+    u32 pid = bpf_get_current_pid_tgid()>>32;
+    u64 fd = args->fd;
+    stats.update(&pid,&fd);
+    return 0;
+}
 
+TRACEPOINT_PROBE(syscalls, sys_exit_connect) {
 
-        connect_events.perf_submit(args, &data, sizeof(data));
+    if (container_should_be_filtered()) {
+        return 0;
     }
 
+    struct data_connect data = {};
+    u32 pid = bpf_get_current_pid_tgid()>>32;
+    data.pid = pid;
+    data.ts = bpf_ktime_get_ns();
+    bpf_get_current_comm(&data.comm, sizeof(data.comm));
+
+    long ret = args->ret;
+
+    if(args->ret != 0)//即调用close失败，删除map中对应的元素
+        stats.delete(&pid);
+    else
+    {
+        u64* fd = (stats.lookup(&pid));//调用成功拿到fd后 将data数据perf出去
+
+        if (fd == 0) {
+            return 0;   // missed entry
+        }
+        data.fd = *fd;
+        connect_events.perf_submit(args, &data, sizeof(data));
+        stats.delete(&pid);
+    }
     return 0;
 }

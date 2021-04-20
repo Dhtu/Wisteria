@@ -135,6 +135,6 @@ class EBPF_event_listener:
 
             self.output('tps', event_text)
 
-            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
+            # self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
 
 ebpf_event_listener = EBPF_event_listener()
