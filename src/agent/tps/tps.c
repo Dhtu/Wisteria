@@ -578,3 +578,31 @@ TRACEPOINT_PROBE(syscalls, sys_exit_vfork) {
 
     return 0;
 }
+
+
+struct data_connect {
+    u32 pid;
+    u64 ts;
+    char comm[TASK_COMM_LEN];
+    long ret;
+};
+BPF_PERF_OUTPUT(connect_events);
+TRACEPOINT_PROBE(syscalls, sys_exit_connect) {
+    if (container_should_be_filtered()) {
+        return 0;
+    }
+
+    if (args->ret != 0){
+        struct data_connect data = {};
+        u32 pid = bpf_get_current_pid_tgid() >> 32;
+        data.pid = pid;
+        data.ts = bpf_ktime_get_ns();
+        data.ret = args->ret;
+        bpf_get_current_comm(&data.comm, sizeof(data.comm));
+
+
+        connect_events.perf_submit(args, &data, sizeof(data));
+    }
+
+    return 0;
+}
