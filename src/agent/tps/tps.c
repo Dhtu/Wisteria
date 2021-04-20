@@ -553,7 +553,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_fork) {
         bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-        accept_events.perf_submit(args, &data, sizeof(data));
+        fork_events.perf_submit(args, &data, sizeof(data));
     }
 
     return 0;
@@ -573,7 +573,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_vfork) {
         bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-        accept_events.perf_submit(args, &data, sizeof(data));
+        fork_events.perf_submit(args, &data, sizeof(data));
     }
 
     return 0;
