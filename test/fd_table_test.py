@@ -181,6 +181,22 @@ class MyTestCase(unittest.TestCase):
         m_table.put_item(Sock_fd_item(12, 12, 12, True))
         m_table.put_item(Sock_fd_item(12, 12, 13, True))
         m_table.put_item(Sock_fd_item(12, 12, 14, True))
+        m_table.map_copy(12, 13)
+        ret = m_table.is_sock(Tps_item(13, 12, 15, True, "comm"))
+        self.assertEqual(True, ret)
+
+    # 6.5 检查深拷贝
+    def test6_5(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, True))
+        m_table.put_item(Sock_fd_item(12, 12, 6, False))
+        m_table.put_item(Sock_fd_item(12, 12, 8, True))
+        m_table.put_item(Sock_fd_item(12, 12, 10, True))
+        m_table.put_item(Sock_fd_item(12, 12, 11, False))
+        m_table.put_item(Sock_fd_item(12, 12, 12, True))
+        m_table.put_item(Sock_fd_item(12, 12, 13, True))
+        m_table.map_copy(12, 13)
+        m_table.put_item(Sock_fd_item(12, 12, 14, False))
         ret = m_table.is_sock(Tps_item(13, 12, 15, True, "comm"))
         self.assertEqual(True, ret)
 

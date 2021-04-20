@@ -36,6 +36,23 @@ class Fd_table_value:
         self.q = queue.Queue()
         self.maxsize = maxsize
 
+    def __deepcopy__(self, memodict=None):
+
+        if memodict is None:
+            memodict = {}
+
+        value_copy = Fd_table_value(self.maxsize)
+
+        l = list(self.q.queue)
+
+        for item in l:
+            value_copy.put(item.ts,item.sock_flag)
+
+        memodict[self] = value_copy
+
+        return value_copy
+
+
     def put(self, ts, sock_flag):
 
         # 如果队列满了就get出一个元素，以增加后续查找效率
@@ -142,7 +159,8 @@ class Fd_table:
 
     def map_copy(self,pid, ppid):  # pid is father,ppid is son
         self.m_fd_map[ppid] = copy.deepcopy(self.m_fd_map[pid])
-
+        for fd in self.m_fd_map[pid] :
+            self.m_table[(ppid,fd)] = copy.deepcopy(self.m_table[(pid,fd)])
 
 
     # 添加fd操作记录

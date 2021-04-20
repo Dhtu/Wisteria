@@ -16,3 +16,8 @@
 3. ~~connect与accept vfork fork系统调用处理 @hfx
 4. tcp客户端 服务端 !
 5. read, write业务处理逻辑！
+6. ~~事件打印卡顿
+
+1. 排序
+2. c/s 匹配read 跟write
+3. 计算延时
