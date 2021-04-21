@@ -200,5 +200,62 @@ class MyTestCase(unittest.TestCase):
         ret = m_table.is_sock(Tps_item(13, 12, 15, True, "comm"))
         self.assertEqual(True, ret)
 
+
+    # 7.1 插入顺序不一致
+    def test7_1(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 5, False))
+        m_table.put_item(Sock_fd_item(12, 12, 0, True))
+        ret = m_table.is_sock(Tps_item(12, 12, 15, True, "comm"))
+        self.assertEqual(False, ret)
+
+    # 7.2 插入顺序不一致
+    def test7_2(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 5, True))
+        m_table.put_item(Sock_fd_item(12, 12, 0, False))
+        ret = m_table.is_sock(Tps_item(13, 12, 15, True, "comm"))
+        self.assertEqual(True, ret)
+
+    # 7.3 插入顺序不一致
+    def test7_3(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 5, False))
+        m_table.put_item(Sock_fd_item(12, 12, 0, True))
+        m_table.put_item(Sock_fd_item(12, 12, 8, False))
+        ret = m_table.is_sock(Tps_item(12, 12, 3, True, "comm"))
+        self.assertEqual(True, ret)
+
+    # 8.1 设置服务器标识符
+    def test8_1(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, False))
+        m_table.put_item(Sock_fd_item(12, 12, 5, True))
+        m_table.put_item(Sock_fd_item(12, 12, 8, False))
+        m_table.set_cs(12,12,True)
+        is_server = m_table.get_cs(12,12)
+        self.assertEqual(True, is_server)
+
+    # 8.2 设置客户端标识符
+    def test8_2(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, False))
+        m_table.put_item(Sock_fd_item(12, 12, 5, True))
+        m_table.put_item(Sock_fd_item(12, 12, 8, False))
+        m_table.set_cs(12, 12, False)
+        is_server = m_table.get_cs(12, 12)
+        self.assertEqual(False, is_server)
+
+    # 8.3 检查fork
+    def test8_3(self):
+        m_table = Fd_table()
+        m_table.put_item(Sock_fd_item(12, 12, 0, False))
+        m_table.put_item(Sock_fd_item(12, 12, 5, True))
+        m_table.put_item(Sock_fd_item(12, 12, 8, False))
+        m_table.set_cs(12, 12, True)
+        m_table.map_copy(12, 13)
+        is_server = m_table.get_cs(13, 12)
+        self.assertEqual(True, is_server)
+
 if __name__ == '__main__':
     unittest.main()

@@ -11,17 +11,18 @@
 
 
 # 4.20
-1. read, write业务处理逻辑
-2. fd_table的copy函数 !
+1. ~read, write业务处理逻辑
+2. ~~fd_table的copy函数 !
 3. ~~connect与accept vfork fork系统调用处理 @hfx
-4. tcp客户端 服务端 !
-5. read, write业务处理逻辑！
+4. ～tcp客户端 服务端 !
+5. ~read, write业务处理逻辑！
 6. ~~事件打印卡顿
 
 #4.21
-1. 排序
+1. 排序队列
 2. c/s 匹配read 跟write
 3. 计算延时
 
 
 1. fork带来的bug：accept于close之前发来消息（记录队列时间顺序不一致）
+2. 客户端与服务端

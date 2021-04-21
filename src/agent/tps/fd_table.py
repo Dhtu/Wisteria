@@ -35,6 +35,7 @@ class Fd_table_value:
     def __init__(self, maxsize):
         self.q = queue.Queue()
         self.maxsize = maxsize
+        self.is_server = False
 
     def __deepcopy__(self, memodict=None):
 
@@ -44,6 +45,8 @@ class Fd_table_value:
         value_copy = Fd_table_value(self.maxsize)
 
         l = list(self.q.queue)
+
+        value_copy.is_server = self.is_server
 
         for item in l:
             value_copy.put(item.ts,item.sock_flag)
@@ -176,8 +179,20 @@ class Fd_table:
         if sock_fd_item.sock_flag:
             self.map_add(sock_fd_item.pid,sock_fd_item.fd)
         else:
-            self.map_delete(sock_fd_item.pid,sock_fd_item.fd)
+            # self.map_delete(sock_fd_item.pid,sock_fd_item.fd)
+            pass # 当close在fork前submit出来时，这里就会删除这一set item，但是这会影响先前的
 
+    # 设置是否是服务器
+    def set_cs(self,pid,fd,is_server):
+        key = (pid, fd)
+
+        # if key in self.m_table:
+        self.m_table[key].is_server = is_server
+        # else:
+        #     pass # todo: 异常处理
+
+    def get_cs(self,pid,fd):
+        return self.m_table[(pid,fd)].is_server
 
     # 初始化table
     def put(self, pid, fd):

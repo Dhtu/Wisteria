@@ -115,6 +115,8 @@ class EBPF_event_listener:
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
 
+            self.fd_table.set_cs(event.pid, event.fd, True)
+
     def on_close(self, event):
         if self.event_filter(event):
             event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"close")
@@ -134,6 +136,8 @@ class EBPF_event_listener:
             event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"connect")
 
             self.output('tps', event_text)
+
+            self.fd_table.set_cs(event.pid,event.fd,False)
 
             # self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
 
