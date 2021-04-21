@@ -186,13 +186,21 @@ class Fd_table:
     def set_cs(self,pid,fd,is_server):
         key = (pid, fd)
 
-        # if key in self.m_table:
-        self.m_table[key].is_server = is_server
+        if key in self.m_table:
+            self.m_table[key].is_server = is_server
         # else:
         #     pass # todo: 异常处理
 
     def get_cs(self,pid,fd):
-        return self.m_table[(pid,fd)].is_server
+
+        key = (pid, fd)
+
+        if key in self.m_table:
+            return self.m_table[(pid,fd)].is_server
+        # else:
+        #     pass # todo: 异常处理
+
+
 
     # 初始化table
     def put(self, pid, fd):
@@ -206,10 +214,10 @@ class Fd_table:
 
         self.m_table[key].put(0, True)
 
-    def is_sock(self, tps_item):
-        key = (tps_item.pid, tps_item.fd)
+    def is_sock(self, pid,fd,ts):
+        key = (pid, fd)
 
         if key in self.m_table:
-            return self.m_table[key].is_sock(tps_item.ts)
+            return self.m_table[key].is_sock(ts)
         else:
             return False

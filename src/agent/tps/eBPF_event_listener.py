@@ -69,35 +69,48 @@ class EBPF_event_listener:
     def on_write(self, event):
 
         if self.event_filter(event):
-            tps_item = Tps_item(event.pid, event.fd, event.enter_ts, False, event.comm)
-            is_sock = self.fd_table.is_sock(tps_item)
+            tps_item = Tps_item(event.pid, event.fd, self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), False,
+                                event.comm)
+            is_sock = self.fd_table.is_sock(event.pid, event.fd, self.get_ts(event.enter_ts))
 
             event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
                                            event.pid, event.fd, b"write")
             if is_sock:
                 event_text += b' is sock'
-                # print("read")
-                # self.output('tps', event_text)
-            else:
-                event_text += b' is not sock'
-            self.output('tps', event_text)
+                is_server = self.fd_table.get_cs(event.pid, event.fd)
+                if is_server:
+                    event_text += b' is server'
+                else:
+                    event_text += b' is client'
+
+                self.output('tps', event_text)
+            # else:
+            #     event_text += b' is not sock'
+
+            # self.output('tps', event_text)
 
     def on_read(self, event):
 
         if self.event_filter(event):
-            tps_item = Tps_item(event.pid, event.fd, event.enter_ts, False, event.comm)
-            is_sock = self.fd_table.is_sock(tps_item)
+            tps_item = Tps_item(event.pid, event.fd, self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), True,
+                                event.comm)
+            is_sock = self.fd_table.is_sock(event.pid, event.fd, self.get_ts(event.enter_ts))
 
             event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
                                            event.pid, event.fd, b"read")
             if is_sock:
                 event_text += b' is sock'
-                # print("write")
+                is_server = self.fd_table.get_cs(event.pid, event.fd)
+                if is_server:
+                    event_text += b' is server'
+                else:
+                    event_text += b' is client'
 
-            else:
-                event_text += b' is not sock'
+                self.output('tps', event_text)
+            # else:
+            # event_text += b' is not sock'
 
-            self.output('tps', event_text)
+            # self.output('tps', event_text)
 
     def on_socket(self, event):
         if self.event_filter(event):
@@ -105,7 +118,7 @@ class EBPF_event_listener:
 
             self.output('tps', event_text)
 
-            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.ts), True))
 
     def on_accept(self, event):
         if self.event_filter(event):
@@ -113,7 +126,7 @@ class EBPF_event_listener:
 
             self.output('tps', event_text)
 
-            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.ts), True))
 
             self.fd_table.set_cs(event.pid, event.fd, True)
 
@@ -123,7 +136,7 @@ class EBPF_event_listener:
 
             self.output('tps', event_text)
 
-            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, False))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.ts), False))
 
     def on_fork(self, event):
         if self.event_filter(event):
@@ -137,8 +150,9 @@ class EBPF_event_listener:
 
             self.output('tps', event_text)
 
-            self.fd_table.set_cs(event.pid,event.fd,False)
+            self.fd_table.set_cs(event.pid, event.fd, False)
 
             # self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
+
 
 ebpf_event_listener = EBPF_event_listener()
