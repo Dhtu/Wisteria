@@ -15,16 +15,19 @@
 2. ~~fd_table的copy函数 !
 3. ~~connect与accept vfork fork系统调用处理 @hfx
 4. ～tcp客户端 服务端 !
-5. ~read, write业务处理逻辑！
+5. ~~read, write业务处理逻辑！
 6. ~~事件打印卡顿
 
-#4.21
-1. ~~排序队列
-2. c/s 匹配read 跟write
-3. 计算延时
+# 4.21
+1. ~~ 排序队列
+2. ~~ c/s 匹配read 跟write
+3. ~~ 计算延时
 
-
+# 4.22
 1. accept 异常返回值
-2. 客户端与服务端
-3. 多核顺序队列
+2. 客户端与服务端 1/2
+3. ~~多核顺序队列
 4. enter与close时间
+5. 因为现在所有的事件都是顺序的，fd_table的queue可以简单地换成一个boolean值
+6. 三次握手异常处理
+7. 判断匹配终点

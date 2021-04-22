@@ -6,6 +6,7 @@
 __author__ = 'SuDrang'
 
 import socket
+from matching_rw import *
 
 DEBUG = True
 KAFKA_SERVER_IP = '172.17.0.1:9092'
@@ -27,6 +28,7 @@ class EBPF_event_listener:
         self.current_pid = os.getpid()
         self.start = 0
         self.fd_table = Fd_table()
+        self.cs_matcher = matching_rw()
         self.system_call_table = {
             0: self.on_read,
             1: self.on_write,
@@ -41,8 +43,6 @@ class EBPF_event_listener:
         recall = self.system_call_table[event.sys_call_id]
         if recall:
             recall(event)
-
-
 
     def event_filter(self, event):
         if event.comm != b"bash" \
@@ -85,15 +85,18 @@ class EBPF_event_listener:
     def on_write(self, event):
 
         if self.event_filter(event):
-            tps_item = Tps_item(event.pid, event.fd, self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), False,
-                                event.comm)
-            is_sock = self.fd_table.is_sock(event.pid, event.fd, self.get_ts(event.enter_ts))
 
-            event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
+            enter_ts = self.get_ts(event.enter_ts)
+            exit_ts = self.get_ts(event.exit_ts)
+
+            is_sock = self.fd_table.is_sock(event.pid, event.fd, enter_ts)
+
+            event_text = self.debug_print2(enter_ts, exit_ts, event.comm,
                                            event.pid, event.fd, b"write")
             if is_sock:
                 event_text += b' is sock'
                 is_server = self.fd_table.get_cs(event.pid, event.fd)
+                self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts,exit_ts,is_server,False)
                 if is_server:
                     event_text += b' is server'
                 else:
@@ -108,15 +111,16 @@ class EBPF_event_listener:
     def on_read(self, event):
 
         if self.event_filter(event):
-            tps_item = Tps_item(event.pid, event.fd, self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), True,
-                                event.comm)
-            is_sock = self.fd_table.is_sock(event.pid, event.fd, self.get_ts(event.enter_ts))
+            enter_ts = self.get_ts(event.enter_ts)
+            exit_ts = self.get_ts(event.exit_ts)
+            is_sock = self.fd_table.is_sock(event.pid, event.fd, enter_ts)
 
-            event_text = self.debug_print2(self.get_ts(event.enter_ts), self.get_ts(event.exit_ts), event.comm,
+            event_text = self.debug_print2(enter_ts, exit_ts, event.comm,
                                            event.pid, event.fd, b"read")
             if is_sock:
                 event_text += b' is sock'
                 is_server = self.fd_table.get_cs(event.pid, event.fd)
+                self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts, exit_ts, is_server, True)
                 if is_server:
                     event_text += b' is server'
                 else:
@@ -153,6 +157,8 @@ class EBPF_event_listener:
             self.output('tps', event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), False))
+
+            self.cs_matcher.delete(event.pid, event.fd)
 
     def on_fork(self, event):
         if self.event_filter(event):
