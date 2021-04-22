@@ -28,6 +28,8 @@ try:
     transport.open()
     print(client.ping())
     client.say('Hello from python!')
+    client.say('Hello from python2!')
+    client.say('Hello from python3!')
 
     # Close!
     transport.close()

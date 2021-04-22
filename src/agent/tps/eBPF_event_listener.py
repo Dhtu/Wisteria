@@ -8,7 +8,7 @@ __author__ = 'SuDrang'
 import socket
 from matching_rw import *
 
-DEBUG = True
+DEBUG = False
 KAFKA_SERVER_IP = '172.17.0.1:9092'
 if not DEBUG:
     from kafka import KafkaProducer
@@ -93,7 +93,8 @@ class EBPF_event_listener:
                 event_text += b' is sock'
                 is_server = self.fd_table.get_cs(event.pid, event.fd)
                 message = self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts, exit_ts, is_server, False)
-                self.output2kafka(message)
+                if message != 0:
+                    self.output2kafka("tps",message)
                 if is_server:
                     event_text += b' is server'
                 else:
@@ -119,7 +120,8 @@ class EBPF_event_listener:
                 is_server = self.fd_table.get_cs(event.pid, event.fd)
 
                 message = self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts, exit_ts, is_server, True)
-                self.output2kafka(message)
+                if message != 0:
+                    self.output2kafka("tps", message)
                 if is_server:
                     event_text += b' is server'
                 else:

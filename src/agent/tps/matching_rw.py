@@ -64,19 +64,14 @@ class matching_rw:
                 self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
                 return 0
         else:
-            if is_read == 1:
-                is_read = 0
-            else:
-                is_read = 1
-            is_server = 1
-            self.matching_rw(pid, fd, enter_ts, exit_ts, is_server, is_read)
+            return self.matching_rw(pid, fd, enter_ts, exit_ts, not is_server, not is_read)
 
     def delete(self, pid, fd):
         try:
             del self.map[(pid, fd)]
         except KeyError:
-            print("此pid fd 不存在")
-
+            # print("此pid fd 不存在")
+            pass
 # t = matching_rw()
 #  (pid, fd, enter_ts, exit_ts, is_server, is_read)
 # server r r r w w w r r w w r
