@@ -59,34 +59,37 @@ class matching_rw:
             self.matching_rw(pid, fd, enter_ts, exit_ts, is_server, is_read)
 
     def delete(self, pid, fd):
-        del self.map[(pid, fd)]
+        try:
+            del self.map[(pid, fd)]
+        except KeyError:
+            print("此pid fd 不存在")
 
 
 t = matching_rw()
 #  (pid, fd, enter_ts, exit_ts, is_server, is_read)
 # server r r r w w w r r w w r
-t.matching_rw(1, 1, 2, 3, 1, 1)
-t.matching_rw(1, 1, 4, 5, 1, 1)
-t.matching_rw(1, 1, 6, 7, 1, 1)
-t.matching_rw(1, 1, 8, 9, 1, 0)
-t.matching_rw(1, 1, 10, 11, 1, 0)
-t.matching_rw(1, 1, 12, 13, 1, 0)
-t.matching_rw(1, 1, 14, 15, 1, 1)
-t.matching_rw(1, 1, 16, 17, 1, 1)
-t.matching_rw(1, 1, 18, 19, 1, 0)
-t.matching_rw(1, 1, 20, 21, 1, 0)
-t.matching_rw(1, 1, 22, 23, 1, 1)
-
-# client r r r w w w r r w w r
-t.matching_rw(1, 1, 2, 3, 0, 0)
-t.matching_rw(1, 1, 4, 5, 0, 0)
-t.matching_rw(1, 1, 6, 7, 0, 0)
-t.matching_rw(1, 1, 8, 9, 0, 1)
-t.matching_rw(1, 1, 10, 11, 0, 1)
-t.matching_rw(1, 1, 12, 13, 0, 1)
-t.matching_rw(1, 1, 14, 15, 0, 0)
-t.matching_rw(1, 1, 16, 17, 0, 0)
-t.matching_rw(1, 1, 18, 19, 0, 1)
-t.matching_rw(1, 1, 20, 21, 0, 1)
-t.matching_rw(1, 1, 22, 23, 0, 0)
-del t
+# t.matching_rw(1, 1, 2, 3, 1, 1)
+# t.matching_rw(1, 1, 4, 5, 1, 1)
+# t.matching_rw(1, 1, 6, 7, 1, 1)
+# t.matching_rw(1, 1, 8, 9, 1, 0)
+# t.matching_rw(1, 1, 10, 11, 1, 0)
+# t.matching_rw(1, 1, 12, 13, 1, 0)
+# t.matching_rw(1, 1, 14, 15, 1, 1)
+# t.matching_rw(1, 1, 16, 17, 1, 1)
+# t.matching_rw(1, 1, 18, 19, 1, 0)
+# t.matching_rw(1, 1, 20, 21, 1, 0)
+# t.matching_rw(1, 1, 22, 23, 1, 1)
+#
+# # client r r r w w w r r w w r
+# t.matching_rw(1, 1, 2, 3, 0, 0)
+# t.matching_rw(1, 1, 4, 5, 0, 0)
+# t.matching_rw(1, 1, 6, 7, 0, 0)
+# t.matching_rw(1, 1, 8, 9, 0, 1)
+# t.matching_rw(1, 1, 10, 11, 0, 1)
+# t.matching_rw(1, 1, 12, 13, 0, 1)
+# t.matching_rw(1, 1, 14, 15, 0, 0)
+# t.matching_rw(1, 1, 16, 17, 0, 0)
+# t.matching_rw(1, 1, 18, 19, 0, 1)
+# t.matching_rw(1, 1, 20, 21, 0, 1)
+# t.matching_rw(1, 1, 22, 23, 0, 0)
+t.delete(1, 1)
