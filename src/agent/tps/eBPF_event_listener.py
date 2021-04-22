@@ -13,7 +13,6 @@ KAFKA_SERVER_IP = '172.17.0.1:9092'
 if not DEBUG:
     from kafka import KafkaProducer
 from fd_table import *
-from tps_item import *
 
 
 class EBPF_event_listener:
@@ -55,20 +54,17 @@ class EBPF_event_listener:
             return False
 
     @staticmethod
-    def debug_print(ts, comm, pid, fd, message):
-        event_text = b"%-9.3f" % ts
-        event_text += b" %-16s %-10d %-10d" % (comm, pid, fd)
-        event_text += message
-        return event_text
-
-    @staticmethod
-    def debug_print2(enter_ts, exit_ts, comm, pid, fd, message):
+    def debug_format(enter_ts, exit_ts, comm, pid, fd, message):
         event_text = b"%-9.3f %-9.3f " % (enter_ts, exit_ts)
         event_text += b" %-16s %-10d %-10d" % (comm, pid, fd)
         event_text += message
         return event_text
 
-    def output(self, topic, message):
+    @staticmethod
+    def output(message):
+        print(message)
+
+    def output2kafka(self, topic, message):
         if not DEBUG:
             self.producer.send(topic, key=None, value=message, partition=0)
         if self.print_message:
@@ -91,18 +87,19 @@ class EBPF_event_listener:
 
             is_sock = self.fd_table.is_sock(event.pid, event.fd, enter_ts)
 
-            event_text = self.debug_print2(enter_ts, exit_ts, event.comm,
+            event_text = self.debug_format(enter_ts, exit_ts, event.comm,
                                            event.pid, event.fd, b"write")
             if is_sock:
                 event_text += b' is sock'
                 is_server = self.fd_table.get_cs(event.pid, event.fd)
-                self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts,exit_ts,is_server,False)
+                message = self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts, exit_ts, is_server, False)
+                self.output2kafka(message)
                 if is_server:
                     event_text += b' is server'
                 else:
                     event_text += b' is client'
 
-                self.output('tps', event_text)
+                self.output(event_text)
             else:
                 event_text += b' is not sock'
 
@@ -115,18 +112,20 @@ class EBPF_event_listener:
             exit_ts = self.get_ts(event.exit_ts)
             is_sock = self.fd_table.is_sock(event.pid, event.fd, enter_ts)
 
-            event_text = self.debug_print2(enter_ts, exit_ts, event.comm,
+            event_text = self.debug_format(enter_ts, exit_ts, event.comm,
                                            event.pid, event.fd, b"read")
             if is_sock:
                 event_text += b' is sock'
                 is_server = self.fd_table.get_cs(event.pid, event.fd)
-                self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts, exit_ts, is_server, True)
+
+                message = self.cs_matcher.matching_rw(event.pid, event.fd, enter_ts, exit_ts, is_server, True)
+                self.output2kafka(message)
                 if is_server:
                     event_text += b' is server'
                 else:
                     event_text += b' is client'
 
-                self.output('tps', event_text)
+                self.output(event_text)
             else:
                 event_text += b' is not sock'
 
@@ -134,17 +133,24 @@ class EBPF_event_listener:
 
     def on_socket(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"socket")
+            enter_ts = self.get_ts(event.enter_ts)
+            exit_ts = self.get_ts(event.exit_ts)
 
-            self.output('tps', event_text)
+            event_text = self.debug_format(enter_ts, exit_ts, event.comm,
+                                           event.pid, event.fd, b"socket")
+            self.output(event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), True))
 
     def on_accept(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"accept")
+            enter_ts = self.get_ts(event.enter_ts)
+            exit_ts = self.get_ts(event.exit_ts)
 
-            self.output('tps', event_text)
+            event_text = self.debug_format(enter_ts, exit_ts, event.comm,
+                                           event.pid, event.fd, b"accept")
+
+            self.output(event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), True))
 
@@ -152,9 +158,13 @@ class EBPF_event_listener:
 
     def on_close(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"close")
+            enter_ts = self.get_ts(event.enter_ts)
+            exit_ts = self.get_ts(event.exit_ts)
 
-            self.output('tps', event_text)
+            event_text = self.debug_format(enter_ts, exit_ts, event.comm,
+                                           event.pid, event.fd, b"close")
+
+            self.output(event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), False))
 
@@ -162,19 +172,24 @@ class EBPF_event_listener:
 
     def on_fork(self, event):
         if self.event_filter(event):
+            enter_ts = self.get_ts(event.enter_ts)
+            exit_ts = self.get_ts(event.exit_ts)
+
             self.fd_table.map_copy(event.pid, event.fd)
-            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"fork")
-            self.output('tps', event_text)
+            event_text = self.debug_format(enter_ts, exit_ts, event.comm,
+                                           event.pid, event.fd, b"fork")
+            self.output(event_text)
 
     def on_connect(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"connect")
+            enter_ts = self.get_ts(event.enter_ts)
+            exit_ts = self.get_ts(event.exit_ts)
 
-            self.output('tps', event_text)
+            event_text = self.debug_format(enter_ts, exit_ts, event.comm,
+                                           event.pid, event.fd, b"connect")
+            self.output(event_text)
 
             self.fd_table.set_cs(event.pid, event.fd, False)
-
-            # self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, event.ts, True))
 
 
 ebpf_event_listener = EBPF_event_listener()

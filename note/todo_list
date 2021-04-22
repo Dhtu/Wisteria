@@ -3,11 +3,11 @@
 2. ## 多次重复close调用
 3. ~~ read,write,exit监听
 3. ~~ 基于线程的测试程序 @hfx
-4. TCP服务端与用户端判断！（）!
-5. vfork fork系统调用处理 @hfx
-6. read, write业务处理逻辑
-7. UDP cs判断
-8. socket，accept，connect的exit监听  @hfx
+4. ~ TCP服务端与用户端判断！（）!
+5. ~~ vfork fork系统调用处理 @hfx
+6. ~ read, write业务处理逻辑
+7. ## UDP cs判断 作废
+8. ~~ socket，accept，connect的exit监听  @hfx
 
 
 # 4.20
