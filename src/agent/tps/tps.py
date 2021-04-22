@@ -39,46 +39,53 @@ b = BPF(text=prog)
 print("Start monitoring the sys_read system call")
 
 
-def print_write_event(cpu, data, size):
-    event = b["write_events"].event(data)
-    ebpf_event_listener.on_write(event)
+# def print_write_event(cpu, data, size):
+#     event = b["write_events"].event(data)
+#     ebpf_event_listener.on_write(event)
+#
+#
+# def print_read_event(cpu, data, size):
+#     event = b["read_events"].event(data)
+#     ebpf_event_listener.on_read(event)
 
 
-def print_read_event(cpu, data, size):
-    event = b["read_events"].event(data)
-    ebpf_event_listener.on_read(event)
+# def process_sock_event(cpu, data, size):
+#     event = b["sock_events"].event(data)
+#     ebpf_event_listener.on_socket(event)
+#
+#
+# def process_close_event(cpu, data, size):
+#     event = b["close_events"].event(data)
+#     ebpf_event_listener.on_close(event)
+#
+#
+# def process_accept_event(cpu, data, size):
+#     event = b["accept_events"].event(data)
+#     ebpf_event_listener.on_accept(event)
+
+# def process_fork_event(cpu, data, size):
+#     event = b["fork_events"].event(data)
+#     ebpf_event_listener.on_fork(event)
+
+# def process_connect_event(cpu, data, size):
+#     event = b["connect_events"].event(data)
+#     ebpf_event_listener.on_connect(event)
 
 
-def process_sock_event(cpu, data, size):
-    event = b["sock_events"].event(data)
-    ebpf_event_listener.on_socket(event)
+def process_events(cpu,data,size):
+    event = b["events"].event(data)
+    ebpf_event_listener.routing(event)
 
-
-def process_close_event(cpu, data, size):
-    event = b["close_events"].event(data)
-    ebpf_event_listener.on_close(event)
-
-
-def process_accept_event(cpu, data, size):
-    event = b["accept_events"].event(data)
-    ebpf_event_listener.on_accept(event)
-
-def process_fork_event(cpu, data, size):
-    event = b["fork_events"].event(data)
-    ebpf_event_listener.on_fork(event)
-
-def process_connect_event(cpu, data, size):
-    event = b["connect_events"].event(data)
-    ebpf_event_listener.on_connect(event)
 
 # loop with callback to print_event
-b["read_events"].open_perf_buffer(print_read_event)
-b["write_events"].open_perf_buffer(print_write_event)
-b["sock_events"].open_perf_buffer(process_sock_event)
-b["close_events"].open_perf_buffer(process_close_event)
-b["accept_events"].open_perf_buffer(process_accept_event)
-b["fork_events"].open_perf_buffer(process_fork_event)
-b["connect_events"].open_perf_buffer(process_connect_event)
+# b["read_events"].open_perf_buffer(print_read_event)
+# b["write_events"].open_perf_buffer(print_write_event)
+b["events"].open_perf_buffer(process_events)
+# b["sock_events"].open_perf_buffer(process_sock_event)
+# b["close_events"].open_perf_buffer(process_close_event)
+# b["accept_events"].open_perf_buffer(process_accept_event)
+# b["fork_events"].open_perf_buffer(process_fork_event)
+# b["connect_events"].open_perf_buffer(process_connect_event)
 
 while True:
     try:

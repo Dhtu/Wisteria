@@ -27,6 +27,22 @@ class EBPF_event_listener:
         self.current_pid = os.getpid()
         self.start = 0
         self.fd_table = Fd_table()
+        self.system_call_table = {
+            0: self.on_read,
+            1: self.on_write,
+            2: self.on_socket,
+            3: self.on_close,
+            4: self.on_accept,
+            5: self.on_connect,
+            6: self.on_fork
+        }
+
+    def routing(self, event):
+        recall = self.system_call_table[event.sys_call_id]
+        if recall:
+            recall(event)
+
+
 
     def event_filter(self, event):
         if event.comm != b"bash" \
@@ -84,8 +100,8 @@ class EBPF_event_listener:
                     event_text += b' is client'
 
                 self.output('tps', event_text)
-            # else:
-            #     event_text += b' is not sock'
+            else:
+                event_text += b' is not sock'
 
             # self.output('tps', event_text)
 
@@ -107,46 +123,46 @@ class EBPF_event_listener:
                     event_text += b' is client'
 
                 self.output('tps', event_text)
-            # else:
-            # event_text += b' is not sock'
+            else:
+                event_text += b' is not sock'
 
             # self.output('tps', event_text)
 
     def on_socket(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"socket")
+            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"socket")
 
             self.output('tps', event_text)
 
-            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.ts), True))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), True))
 
     def on_accept(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"accept")
+            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"accept")
 
             self.output('tps', event_text)
 
-            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.ts), True))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), True))
 
             self.fd_table.set_cs(event.pid, event.fd, True)
 
     def on_close(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"close")
+            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"close")
 
             self.output('tps', event_text)
 
-            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.ts), False))
+            self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), False))
 
     def on_fork(self, event):
         if self.event_filter(event):
-            self.fd_table.map_copy(event.pid, event.ret)
-            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.ret, b"fork")
+            self.fd_table.map_copy(event.pid, event.fd)
+            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"fork")
             self.output('tps', event_text)
 
     def on_connect(self, event):
         if self.event_filter(event):
-            event_text = self.debug_print(self.get_ts(event.ts), event.comm, event.pid, event.fd, b"connect")
+            event_text = self.debug_print(self.get_ts(event.exit_ts), event.comm, event.pid, event.fd, b"connect")
 
             self.output('tps', event_text)
 
