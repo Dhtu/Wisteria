@@ -40,9 +40,10 @@ class matching_rw:
                 elif self.map[(pid, fd)][2] == 0 and is_read == 1:  # w r
                     try:
                         self.map[(pid, fd)][5] = self.map[(pid, fd)][1] - self.map[(pid, fd)][0]
-                        print(self.map[(pid, fd)][3])
-                        print(self.map[(pid, fd)][4])
-                        print(self.map[(pid, fd)][5])
+                        print(pid, fd, "ts1", self.map[(pid, fd)][3])
+                        print(pid, fd, "ts2", self.map[(pid, fd)][4])
+                        print(pid, fd, "ts3", self.map[(pid, fd)][5])
+                        self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
                     except KeyError:
                         self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
                 else:  # -1 w 出错了
@@ -63,11 +64,29 @@ class matching_rw:
 
 t = matching_rw()
 #  (pid, fd, enter_ts, exit_ts, is_server, is_read)
-t.matching_rw(1, 1, 2.5, 3.5, 0, 0)
-t.matching_rw(1, 1, 3.7, 4.2, 0, 0)
-# t.matching_rw(2, 2, 2.5, 3.5, 0, 0)
-t.matching_rw(1, 1, 4.7, 5.3, 0, 1)
-# t.matching_rw(2, 2, 3.7, 4.5, 0, 1)
-t.matching_rw(1, 1, 5.7, 7.2, 0, 0)
-# server r r r w
+# server r r r w w w r r w w r
+t.matching_rw(1, 1, 2, 3, 1, 1)
+t.matching_rw(1, 1, 4, 5, 1, 1)
+t.matching_rw(1, 1, 6, 7, 1, 1)
+t.matching_rw(1, 1, 8, 9, 1, 0)
+t.matching_rw(1, 1, 10, 11, 1, 0)
+t.matching_rw(1, 1, 12, 13, 1, 0)
+t.matching_rw(1, 1, 14, 15, 1, 1)
+t.matching_rw(1, 1, 16, 17, 1, 1)
+t.matching_rw(1, 1, 18, 19, 1, 0)
+t.matching_rw(1, 1, 20, 21, 1, 0)
+t.matching_rw(1, 1, 22, 23, 1, 1)
+
+# client r r r w w w r r w w r
+t.matching_rw(1, 1, 2, 3, 0, 0)
+t.matching_rw(1, 1, 4, 5, 0, 0)
+t.matching_rw(1, 1, 6, 7, 0, 0)
+t.matching_rw(1, 1, 8, 9, 0, 1)
+t.matching_rw(1, 1, 10, 11, 0, 1)
+t.matching_rw(1, 1, 12, 13, 0, 1)
+t.matching_rw(1, 1, 14, 15, 0, 0)
+t.matching_rw(1, 1, 16, 17, 0, 0)
+t.matching_rw(1, 1, 18, 19, 0, 1)
+t.matching_rw(1, 1, 20, 21, 0, 1)
+t.matching_rw(1, 1, 22, 23, 0, 0)
 del t
