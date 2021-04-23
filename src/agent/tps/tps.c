@@ -21,7 +21,7 @@ struct data_event {
     u64 fd;
     enum sys_call sys_call_id;
 };
-BPF_PERF_OUTPUT(events);
+BPF_RINGBUF_OUTPUT(events,1<<4);
 
 BPF_HASH(data_event_map,u32, struct data_event);
 
@@ -61,7 +61,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_write) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -102,7 +102,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_writev) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -142,7 +142,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_sendto) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -183,7 +183,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_sendmsg) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -224,7 +224,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_sendmmsg) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -265,7 +265,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_read) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -307,7 +307,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_recvfrom) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -349,7 +349,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_recvmsg) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -390,7 +390,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_recvmmsg) {
             return 0;   // missed entry
         }
         p_data->exit_ts = bpf_ktime_get_ns();
-        events.perf_submit(args, p_data, sizeof(*p_data));
+        events.ringbuf_output(p_data,sizeof(*p_data),0);
     }
     return 0;
 }
@@ -412,7 +412,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_socket) {
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-    events.perf_submit(args, &data, sizeof(data));
+    events.ringbuf_output(&data, sizeof(data),0);
 
     return 0;
 }
@@ -460,7 +460,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_close) {
             return 0;   // missed entry
         }
         data.fd = *fd;
-        events.perf_submit(args, &data, sizeof(data));
+        events.ringbuf_output(&data, sizeof(data),0);
         stats.delete(&pid);
     }
     return 0;
@@ -482,7 +482,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_accept) {
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-    events.perf_submit(args, &data, sizeof(data));
+    events.ringbuf_output(&data, sizeof(data),0);
 
     return 0;
 }
@@ -503,7 +503,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_accept4) {
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-    events.perf_submit(args, &data, sizeof(data));
+    events.ringbuf_output(&data, sizeof(data),0);
 
     return 0;
 }
@@ -527,7 +527,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_clone) {
         bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-        events.perf_submit(args, &data, sizeof(data));
+        events.ringbuf_output(&data, sizeof(data),0);
     }
 
     return 0;
@@ -550,7 +550,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_fork) {
         bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-        events.perf_submit(args, &data, sizeof(data));
+        events.ringbuf_output(&data, sizeof(data),0);
     }
 
     return 0;
@@ -573,7 +573,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_vfork) {
         bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
 
-        events.perf_submit(args, &data, sizeof(data));
+        events.ringbuf_output(&data, sizeof(data),0);
     }
 
     return 0;
@@ -618,7 +618,7 @@ TRACEPOINT_PROBE(syscalls, sys_exit_connect) {
             return 0;   // missed entry
         }
         data.fd = *fd;
-        events.perf_submit(args, &data, sizeof(data));
+        events.ringbuf_output(&data, sizeof(data),0);
         stats.delete(&pid);
     }
     return 0;
