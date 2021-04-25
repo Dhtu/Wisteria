@@ -1,59 +1,41 @@
+import re
+import os
+
+
 # 对本机已存在的网络进行查找 初始化表
 # 返回值有：pid fd is_server
-import os
 # 数组下标 1：pid
 #         3：fd
 #         8：ip:port->ip:port
+def ip_port_split(str1):
+    ip_port = str1.split('->', maxsplit=1)[0].split(':', maxsplit=1)
+    if ip_port[0] == '*':
+        ip_port[0] = '127.0.0.1'
+    return tuple(ip_port)
 
-# def test_filter(str):
-#     str_list = str.split()
-#     print(str_list)
 
-listen_list = []
+listen_list = []        # 存储的是pid，fd二元组
+establisged_map = {}    # 存储的是{（pid，fd）：（ip，port）}
+
+
 def init():
     nowTime = os.popen('lsof -i -n -P|grep LISTEN|grep IPv4')
     b = nowTime.readlines()
-    for line in nowTime:
-        str_list = str.split()
-        
+    for line in b:
+        str_list = line.split()
+        listen_list.append(ip_port_split(str_list[8]))
 
-    # nowTime = os.popen('lsof -i -n -P|grep LISTEN')
+    nowTime = os.popen('lsof -i -n -P|grep ESTABLISHED|grep IPv4')
+    b = nowTime.readlines()
+    for line in b:
+        str_list = line.split()
+        establisged_map[(str_list[1], re.search(r'\d', str_list[3]).group())] = ip_port_split(str_list[8])
+    for key, value in establisged_map.items():
+        if listen_list.count(value) >= 1:
+            is_server = 1
+        else:
+            is_server = 0
+        print('pid = ' + str(key[0]) + '    fd =' + str(key[1]) + '   isServer = ' + str(is_server))
 
 
-
-# #!/usr/bin/env python
-# # -*- coding: utf-8 -*-
-# Python IP地址和端口的分割方法
-# import re
-# import urllib.parse
-# from typing import Tuple, Optional
-#
-# # . 一次或多次,()结果整体为一个分组
-# _netloc_re = re.compile(r"^(.+):(\d+)$")
-#
-#
-# def split_host_and_port(input_url: str) -> Tuple[str, Optional[int]]:
-#     """
-#         取出IP地址和端口 返回：`(host, port)` 元组
-#     """
-#     parsed_ret = urllib.parse.urlsplit(input_url)
-#     if parsed_ret.scheme not in ("http", "https"):
-#         raise ValueError("Unsupported url scheme: %s" % input_url)
-#     netloc = parsed_ret.netloc
-#     match = _netloc_re.match(netloc)
-#     if match:
-#         host = match.group(1)
-#         port = int(match.group(2))  # type: Optional[int]
-#     else:
-#         host = netloc
-#         if parsed_ret.scheme == 'http':
-#             port = 80
-#         elif parsed_ret.scheme == 'https':
-#             port = 443
-#         else:
-#             port = None
-#     return (host, port)
-#
-# if __name__ == '__main__':
-#     ret = split_host_and_port('https://www.cnblogs.com/liown/p/9927879.html')
-#     print(ret)  # ('www.cnblogs.com', 443)
+init()
