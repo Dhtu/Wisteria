@@ -40,7 +40,10 @@ class matching_rw:
                     # print("出错了，服务先write了或者客户端先read了")
                     return 0
             except KeyError:
-                self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
+                if is_read == 0:
+                    self.map[(pid, fd)] = [enter_ts, exit_ts, -1, -1, -1, -1]
+                else:
+                    self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
                 return 0
         else:
             return self.matching_rw(pid, fd, enter_ts, exit_ts, not is_server, not is_read)
