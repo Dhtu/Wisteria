@@ -8,53 +8,34 @@ class matching_rw:
     # error情况:探针在探入之前就已经建立了连接，此时如果server直接读取的是wirte，而没有对应的链表，这里我们进行丢弃处理，并打印出来错误
     def matching_rw(self, pid, fd, enter_ts, exit_ts, is_server, is_read):
         if is_server == 1:
-
             try:
                 if is_read == 1 and self.map[(pid, fd)][2] == -1:  # -1,r
-                    try:
-                        self.map[(pid, fd)][0] = enter_ts
-                        self.map[(pid, fd)][1] = exit_ts
-                        self.map[(pid, fd)][2] = is_read
-                        return 0
-                    except KeyError:
-                        self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
-                        return 0
+                    self.map[(pid, fd)][0] = enter_ts
+                    self.map[(pid, fd)][1] = exit_ts
+                    self.map[(pid, fd)][2] = is_read
+                    return 0
+                elif self.map[(pid, fd)][2] == -1 and is_read == 0:  # -1 w
+                    return 0
                 elif is_read == 1 and self.map[(pid, fd)][2] == 1:  # r r
-                    try:
-                        self.map[(pid, fd)][1] = exit_ts
-                        self.map[(pid, fd)][2] = is_read
-                        return 0
-                    except KeyError:
-                        self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
-                        return 0
+                    self.map[(pid, fd)][1] = exit_ts
+                    self.map[(pid, fd)][2] = is_read
+                    return 0
                 elif self.map[(pid, fd)][2] == 1 and is_read == 0:  # r w
-                    try:
-                        self.map[(pid, fd)][3] = self.map[(pid, fd)][1] - self.map[(pid, fd)][0]
-                        self.map[(pid, fd)][4] = enter_ts - self.map[(pid, fd)][1]
-                        self.map[(pid, fd)][0] = enter_ts
-                        self.map[(pid, fd)][1] = exit_ts
-                        self.map[(pid, fd)][2] = is_read
-                        return 0
-                    except KeyError:
-                        self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
-                        return 0
+                    self.map[(pid, fd)][3] = self.map[(pid, fd)][1] - self.map[(pid, fd)][0]
+                    self.map[(pid, fd)][4] = enter_ts - self.map[(pid, fd)][1]
+                    self.map[(pid, fd)][0] = enter_ts
+                    self.map[(pid, fd)][1] = exit_ts
+                    self.map[(pid, fd)][2] = is_read
+                    return 0
                 elif self.map[(pid, fd)][2] == 0 and is_read == 0:  # w w
-                    try:
-                        self.map[(pid, fd)][1] = exit_ts
-                        return 0
-                    except KeyError:
-                        self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
-                        return 0
+                    self.map[(pid, fd)][1] = exit_ts
+                    return 0
                 elif self.map[(pid, fd)][2] == 0 and is_read == 1:  # w r
-                    try:
-                        self.map[(pid, fd)][5] = self.map[(pid, fd)][1] - self.map[(pid, fd)][0]
-                        b = b"%-10d %-10d %-9.3f %-9.3f %-9.3f" % (
-                            pid, fd, self.map[(pid, fd)][3], self.map[(pid, fd)][4], self.map[(pid, fd)][5])
-                        self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
-                        return b
-                    except KeyError:
-                        self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
-                        return 0
+                    self.map[(pid, fd)][5] = self.map[(pid, fd)][1] - self.map[(pid, fd)][0]
+                    b = b"%-10d %-10d %-9.3f %-9.3f %-9.3f" % (
+                        pid, fd, self.map[(pid, fd)][3], self.map[(pid, fd)][4], self.map[(pid, fd)][5])
+                    self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
+                    return b
                 else:  # -1 w 出错了
                     # print("出错了，服务先write了或者客户端先read了")
                     return 0
@@ -71,8 +52,8 @@ class matching_rw:
             # print("此pid fd 不存在")
             pass
 # t = matching_rw()
-#  (pid, fd, enter_ts, exit_ts, is_server, is_read)
-# server r r r w w w r r w w r
+#  # (pid, fd, enter_ts, exit_ts, is_server, is_read)
+# # server r r r w w w r r w w r
 # t.matching_rw(1, 1, 2, 3, 1, 1)
 # t.matching_rw(1, 1, 4, 5, 1, 1)
 # t.matching_rw(1, 1, 6, 7, 1, 1)
