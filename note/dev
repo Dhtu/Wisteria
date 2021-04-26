@@ -18,7 +18,7 @@ sudo /usr/share/kafka/bin/kafka-server-start.sh /usr/share/kafka/config/server.p
 
 /usr/share/kafka/bin/kafka-console-producer.sh --topic tcpconnect --bootstrap-server localhost:9092
 
-/usr/share/kafka/bin/kafka-console-consumer.sh --topic tcpconnect --from-beginning --bootstrap-server localhost:9092
+/usr/share/kafka/bin/kafka-console-consumer.sh --topic tcpconnect  --bootstrap-server localhost:9092
 
 # Wisteria agent
 
@@ -33,7 +33,7 @@ sudo /usr/share/kafka/bin/kafka-server-start.sh /usr/share/kafka/config/server.p
 bpftool map create /sys/fs/bpf/mnt_ns_set type hash key 8 value 4 entries 128 \
         name mnt_ns_set flags 0
 
-FILE=/sys/fs/bpf/mnt_ns_set
+FILE=/sys/fs/bpf/mnt_ns_set2
 if [ $(printf '\1' | od -dAn) -eq 1 ]; then
  HOST_ENDIAN_CMD=tac
 else
@@ -48,3 +48,7 @@ grep NSpid /proc/24918/status | cut -f3
 
 用find_ns_pid找到pid
 pid内部的upid就是目标
+
+
+./src/agent/tps/tps.py --mntnsmap /sys/fs/bpf/mnt_ns_set2
+./src/agent/network/tcpconnect.py --mntnsmap /sys/fs/bpf/mnt_ns_set2

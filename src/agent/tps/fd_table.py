@@ -13,6 +13,7 @@ import re
 
 FD_TABLE_DEBUG = False
 
+
 # def on socket(events):
 #     sock_fd_item = Sock_fd_item(1,2,200,True)
 #
@@ -50,12 +51,11 @@ class Fd_table_value:
         value_copy.is_server = self.is_server
 
         for item in l:
-            value_copy.put(item.ts,item.sock_flag)
+            value_copy.put(item.ts, item.sock_flag)
 
         memodict[self] = value_copy
 
         return value_copy
-
 
     def put(self, ts, sock_flag):
 
@@ -106,8 +106,8 @@ class Fd_table_value:
 
 class Fd_table:
     def __init__(self, queue_maxsize=6):
-        self.m_table = dict() # fd操作记录表
-        self.m_fd_map = {} # pid-fd表
+        self.m_table = dict()  # fd操作记录表
+        self.m_fd_map = {}  # pid-fd表
         self.queue_maxsize = queue_maxsize
         self.listdir()
         self.init_cs()
@@ -155,17 +155,17 @@ class Fd_table:
         else:
             self.m_fd_map[pid] = {fd}
 
-    def map_delete(self,pid, fd):
+    def map_delete(self, pid, fd):
         try:
             self.m_fd_map[pid].remove(fd)
-        except KeyError :
+        except KeyError:
             if self.DEBUG:
                 print("pid=", pid, "fd=", fd, "not in map")
 
-    def map_copy(self,pid, ppid):  # pid is father,ppid is son
+    def map_copy(self, pid, ppid):  # pid is father,ppid is son
         self.m_fd_map[ppid] = copy.deepcopy(self.m_fd_map[pid])
-        for fd in self.m_fd_map[pid] :
-            self.m_table[(ppid,fd)] = copy.deepcopy(self.m_table[(pid,fd)])
+        for fd in self.m_fd_map[pid]:
+            self.m_table[(ppid, fd)] = copy.deepcopy(self.m_table[(pid, fd)])
 
     @staticmethod
     def ip_port_split(str1):
@@ -195,7 +195,8 @@ class Fd_table:
             else:
                 is_server = False
             # print('pid = ' + str(key[0]) + '    fd =' + str(key[1]) + '   isServer = ' + str(is_server))
-            self.set_cs(int(key[0]),int(key[1]),is_server)
+            self.set_cs(int(key[0]), int(key[1]), is_server)
+
     # 添加fd操作记录
     def put_item(self, sock_fd_item):
         key = (sock_fd_item.pid, sock_fd_item.fd)
@@ -207,13 +208,13 @@ class Fd_table:
         self.m_table[key].put(sock_fd_item.ts, sock_fd_item.sock_flag)
 
         if sock_fd_item.sock_flag:
-            self.map_add(sock_fd_item.pid,sock_fd_item.fd)
+            self.map_add(sock_fd_item.pid, sock_fd_item.fd)
         else:
             # self.map_delete(sock_fd_item.pid,sock_fd_item.fd)
-            pass # 当close在fork前submit出来时，这里就会删除这一set item，但是这会影响先前的
+            pass  # 当close在fork前submit出来时，这里就会删除这一set item，但是这会影响先前的
 
     # 设置是否是服务器
-    def set_cs(self,pid,fd,is_server):
+    def set_cs(self, pid, fd, is_server):
         # print("key: %d, fd: %d" % (pid,fd)+str(is_server))
         key = (pid, fd)
 
@@ -226,23 +227,20 @@ class Fd_table:
         # else:
         #     pass # todo: 异常处理
 
-
-    def get_cs(self,pid,fd):
+    def get_cs(self, pid, fd):
 
         key = (pid, fd)
 
         if key in self.m_table:
-            return self.m_table[(pid,fd)].is_server
+            return self.m_table[(pid, fd)].is_server
         # else:
         #     pass # todo: 异常处理
-
-
 
     # 初始化table
     def put(self, pid, fd):
         key = (pid, fd)
 
-        self.map_add(pid,fd)
+        self.map_add(pid, fd)
 
         # 如果是第一次操作这一进程的fd，则初始化value queue
         if key not in self.m_table:
@@ -250,7 +248,7 @@ class Fd_table:
 
         self.m_table[key].put(0, True)
 
-    def is_sock(self, pid,fd,ts):
+    def is_sock(self, pid, fd, ts):
         key = (pid, fd)
 
         if key in self.m_table:
