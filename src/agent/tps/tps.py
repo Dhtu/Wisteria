@@ -38,10 +38,23 @@ b = BPF(text=prog)
 # header
 print("Start monitoring the system tps")
 
+event_time = -1000
+c = 0
+
 
 def process_events(ctx, data, size):
     event = b["events"].event(data)
     ebpf_event_listener.routing(event)
+
+    # global event_time
+    # global c
+    # if event_time<=event.exit_ts:
+    #     event_time = event.exit_ts
+    #     c += 1
+    #     print(c)
+    # else:
+    #     print("error min time: %-9.3f event time: %-9.3f" % (event_time,event.exit_ts))
+    #     exit()
 
 
 b["events"].open_ring_buffer(process_events)
