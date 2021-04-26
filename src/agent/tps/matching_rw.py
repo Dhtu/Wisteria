@@ -8,6 +8,7 @@ class matching_rw:
     # error情况:探针在探入之前就已经建立了连接，此时如果server直接读取的是wirte，而没有对应的链表，这里我们进行丢弃处理，并打印出来错误
     def matching_rw(self, pid, fd, enter_ts, exit_ts, is_server, is_read):
         if is_server == 1:
+
             try:
                 if is_read == 1 and self.map[(pid, fd)][2] == -1:  # -1,r
                     try:
@@ -51,9 +52,6 @@ class matching_rw:
                             pid, fd, self.map[(pid, fd)][3], self.map[(pid, fd)][4], self.map[(pid, fd)][5])
                         self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
                         return b
-                        # print(pid, fd, "ts1", self.map[(pid, fd)][3])
-                        # print(pid, fd, "ts2", self.map[(pid, fd)][4])
-                        # print(pid, fd, "ts3", self.map[(pid, fd)][5])
                     except KeyError:
                         self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
                         return 0

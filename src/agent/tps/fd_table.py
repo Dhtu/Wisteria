@@ -9,6 +9,7 @@ import queue
 import os
 import stat
 import copy
+import re
 
 FD_TABLE_DEBUG = False
 
@@ -109,6 +110,7 @@ class Fd_table:
         self.m_fd_map = {} # pid-fd表
         self.queue_maxsize = queue_maxsize
         self.listdir()
+        self.init_cs()
         self.DEBUG = FD_TABLE_DEBUG
 
     def listdir(self):
@@ -165,7 +167,35 @@ class Fd_table:
         for fd in self.m_fd_map[pid] :
             self.m_table[(ppid,fd)] = copy.deepcopy(self.m_table[(pid,fd)])
 
+    @staticmethod
+    def ip_port_split(str1):
+        ip_port = str1.split('->', maxsplit=1)[0].split(':', maxsplit=1)
+        if ip_port[0] == '*':
+            ip_port[0] = '127.0.0.1'
+        return tuple(ip_port)
 
+    def init_cs(self):
+        listen_list = []  # 存储的是pid，fd二元组
+        establisged_map = {}  # 存储的是{（pid，fd）：（ip，port）}
+
+        nowTime = os.popen('lsof -i -n -P|grep LISTEN|grep IPv4')
+        b = nowTime.readlines()
+        for line in b:
+            str_list = line.split()
+            listen_list.append(self.ip_port_split(str_list[8]))
+
+        nowTime = os.popen('lsof -i -n -P|grep ESTABLISHED|grep IPv4')
+        b = nowTime.readlines()
+        for line in b:
+            str_list = line.split()
+            establisged_map[(str_list[1], re.search(r'\d', str_list[3]).group())] = self.ip_port_split(str_list[8])
+        for key, value in establisged_map.items():
+            if listen_list.count(value) >= 1:
+                is_server = True
+            else:
+                is_server = False
+            # print('pid = ' + str(key[0]) + '    fd =' + str(key[1]) + '   isServer = ' + str(is_server))
+            self.set_cs(int(key[0]),int(key[1]),is_server)
     # 添加fd操作记录
     def put_item(self, sock_fd_item):
         key = (sock_fd_item.pid, sock_fd_item.fd)
@@ -184,12 +214,18 @@ class Fd_table:
 
     # 设置是否是服务器
     def set_cs(self,pid,fd,is_server):
+        # print("key: %d, fd: %d" % (pid,fd)+str(is_server))
         key = (pid, fd)
 
         if key in self.m_table:
             self.m_table[key].is_server = is_server
+        #
+        # print(self.m_table[(11834,3)].is_server)
+        # print(self.m_table[(11835,4)].is_server)
+
         # else:
         #     pass # todo: 异常处理
+
 
     def get_cs(self,pid,fd):
 

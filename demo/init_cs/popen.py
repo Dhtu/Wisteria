@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import re
 import os
 
@@ -14,11 +15,13 @@ def ip_port_split(str1):
     return tuple(ip_port)
 
 
-listen_list = []        # 存储的是pid，fd二元组
-establisged_map = {}    # 存储的是{（pid，fd）：（ip，port）}
+
 
 
 def init():
+    listen_list = []  # 存储的是pid，fd二元组
+    establisged_map = {}  # 存储的是{（pid，fd）：（ip，port）}
+
     nowTime = os.popen('lsof -i -n -P|grep LISTEN|grep IPv4')
     b = nowTime.readlines()
     for line in b:
