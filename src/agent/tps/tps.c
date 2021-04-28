@@ -478,6 +478,10 @@ TRACEPOINT_PROBE(syscalls, sys_exit_accept) {
     data.enter_ts = bpf_ktime_get_ns();
     data.exit_ts = bpf_ktime_get_ns();
     data.fd = args->ret;
+    if(data.fd == -1)
+    {
+        return 0;
+    }
     data.sys_call_id = accept;
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
 
