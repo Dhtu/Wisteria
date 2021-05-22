@@ -52,3 +52,12 @@ pid内部的upid就是目标
 
 ./src/agent/tps/tps.py --mntnsmap /sys/fs/bpf/mnt_ns_set2
 ./src/agent/network/tcpconnect.py --mntnsmap /sys/fs/bpf/mnt_ns_set2
+
+
+docker run \
+    -p 9090:9090 \
+    -v /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
+    prom/prometheus
+
+
+curl -X POST http://127.0.0.1:9090/-/reload

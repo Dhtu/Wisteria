@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+
+sudo /usr/share/zookeeper/bin/zkServer.sh start &
+sudo /usr/share/kafka/bin/kafka-server-start.sh /usr/share/kafka/config/server.properties &
+sudo bpftool map create /sys/fs/bpf/mnt0 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt1 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+
+docker start 827

@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+
+FILE=/sys/fs/bpf/$1
+if [ $(printf '\1' | od -dAn) -eq 1 ]; then
+ HOST_ENDIAN_CMD=tac
+else
+  HOST_ENDIAN_CMD=cat
+fi
+
+NS_ID_HEX="$(printf '%016x' $(stat -Lc '%i' /proc/self/ns/mnt) | sed 's/.\{2\}/&\n/g' | $HOST_ENDIAN_CMD)"
+bpftool map update pinned $FILE key hex $NS_ID_HEX value hex 00 00 00 00 any
+
+cd /home/thtu/Wisteria
+./src/agent/tps/tps.py --mntnsmap $FILE 1>/dev/null 2>&1 &
+./src/agent/network/tcpconnect.py --mntnsmap $FILE 1>/dev/null 2>&1 &

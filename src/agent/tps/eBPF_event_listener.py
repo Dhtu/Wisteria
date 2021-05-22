@@ -62,14 +62,16 @@ class EBPF_event_listener:
 
     @staticmethod
     def output(message):
-        print(message)
+        # print(message)
+        pass
 
     def output2kafka(self, topic, message):
         message += bytes(self.ip, encoding="UTF-8")
         if not DEBUG:
             self.producer.send(topic, key=None, value=message, partition=0)
         if self.print_message:
-            print(message)
+            # print(message)
+            pass
 
     def get_ts(self, event_ts):
         if self.start == 0:
@@ -171,7 +173,7 @@ class EBPF_event_listener:
             event_text = self.debug_format(enter_ts, exit_ts, event.comm,
                                            event.pid, event.fd, b"close")
 
-            self.output(event_text)
+            # self.output(event_text)
 
             self.fd_table.put_item(Sock_fd_item(event.pid, event.fd, self.get_ts(event.exit_ts), False))
 

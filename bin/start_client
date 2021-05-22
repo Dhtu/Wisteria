@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+./demo/agent/PingPong/client.py $1

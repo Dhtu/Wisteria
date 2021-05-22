@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import sys,time
 sys.path.append('pygen')
 
 from thrift import Thrift
@@ -13,7 +13,7 @@ from pygen.ping import PingService
 try:
 
     # Make socket
-    transport = TSocket.TSocket('172.17.0.1', 9091)
+    transport = TSocket.TSocket(sys.argv[1], 9091)
 
     # Buffering is critical. Raw sockets are very slow
     transport = TTransport.TBufferedTransport(transport)
@@ -27,9 +27,9 @@ try:
     # Connect!
     transport.open()
     print(client.ping())
-    client.say('Hello from python!')
-    client.say('Hello from python2!')
-    client.say('Hello from python3!')
+    while True:
+        client.say('Hello from python!')
+        time.sleep(2)
 
     # Close!
     transport.close()
