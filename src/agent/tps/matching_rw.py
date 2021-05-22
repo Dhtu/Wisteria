@@ -1,6 +1,14 @@
+from prometheus_client import Counter, Gauge, Summary, Histogram, start_http_server
+
+
 class matching_rw:
     def __init__(self):
         self.map = {}
+        self.transaction_count = Counter('transaction_count', 'A transaction counter')
+        self.transaction_processing_seconds = Gauge('transaction_processing_seconds', 'transaction processing seconds')
+        self.transaction_reading_seconds = Gauge('transaction_reading_seconds', 'transaction reading seconds')
+        self.transaction_writing_seconds = Gauge('transaction_writing_seconds', 'transaction writing seconds')
+        start_http_server(8000)
 
     # 初步想法就是pid，fd对应一个list，list里面存储的是对应的时间和上一次调用的函数和三次对应的时间[enter_ts,exit_ts,read_flag,ts1,ts2,ts3]
     # 例如：server里面存的就是read的开始时间和结束时间，如果下次读取到的是read，就将列表里面的exit（也就是第二个元素）时间更改成实参的exit时间
@@ -34,6 +42,11 @@ class matching_rw:
                     self.map[(pid, fd)][5] = self.map[(pid, fd)][1] - self.map[(pid, fd)][0]
                     b = b"%-10d %-10d %-9.3f %-9.3f %-9.3f" % (
                         pid, fd, self.map[(pid, fd)][3], self.map[(pid, fd)][4], self.map[(pid, fd)][5])
+                    self.transaction_count.inc()
+                    self.transaction_processing_seconds.set(self.map[(pid, fd)][4])
+                    self.transaction_reading_seconds.set(self.map[(pid, fd)][3])
+                    self.transaction_writing_seconds.set(self.map[(pid, fd)][5])
+
                     self.map[(pid, fd)] = [enter_ts, exit_ts, is_read, -1, -1, -1]
                     return b
                 else:  # -1 w 出错了

@@ -8,7 +8,7 @@ strace -T -e read -p
 
 # zookeeper
 
-sudo /usr/share/zookeeper/bin/zkServer.sh start
+sudo nohup /usr/share/zookeeper/bin/zkServer.sh start &
 
 # kafka
 
@@ -30,7 +30,7 @@ sudo /usr/share/kafka/bin/kafka-server-start.sh /usr/share/kafka/config/server.p
 
 # filter
 #daily_start
-bpftool map create /sys/fs/bpf/mnt_ns_set type hash key 8 value 4 entries 128 \
+bpftool map create /sys/fs/bpf/mnt_ns_set2 type hash key 8 value 4 entries 128 \
         name mnt_ns_set flags 0
 
 FILE=/sys/fs/bpf/mnt_ns_set2
