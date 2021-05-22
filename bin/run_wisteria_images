@@ -1,8 +1,8 @@
 docker run  -it --privileged \
-  --name wis2 \
+  --name server0 \
   --pid=host \
   -v /lib/modules:/lib/modules:ro \
   -v /sys:/sys:ro \
   -v /usr/src:/usr/src:ro \
   -v /home/thtu/Wisteria:/home/thtu/Wisteria:ro \
-  wisteria:v0.1
+  wisteria:v1.0

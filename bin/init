@@ -6,5 +6,20 @@ sudo bpftool map create /sys/fs/bpf/mnt0 type hash key 8 value 4 entries 128 \
         name mnt_ns_set flags 0
 sudo bpftool map create /sys/fs/bpf/mnt1 type hash key 8 value 4 entries 128 \
         name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt2 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt3 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt4 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt5 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt6 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt7 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+sudo bpftool map create /sys/fs/bpf/mnt8 type hash key 8 value 4 entries 128 \
+        name mnt_ns_set flags 0
+
 
 docker start 827
